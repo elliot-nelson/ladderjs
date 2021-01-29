@@ -2,53 +2,20 @@
     'use strict';
 
     /**
-     * Constants and game settings, exported individually to maximize
-     * rollup's tree shaking ability.
+     * Constants
      */
 
     const TITLE = 'WIZARD WITH A SHOTGUN';
 
-    // The game's desired dimensions in pixels - the actual dimensions can be adjusted
-    // slightly by the Viewport module.
-    const GAME_WIDTH  = 640;
-    //export const GAME_WIDTH  = 480;
+    // The playable area. Note that this is the desired dimensions, but the actual on-screen dimensions
+    // may be larger to maintain aspect ratio (see `Viewport.width` & `Viewport.height`).
+    const GAME_WIDTH = 640;
     const GAME_HEIGHT = 400;
-    //export const GAME_HEIGHT = 270;
 
-    // Size in pixels of each map tile
-    const TILE_SIZE   = 32;
-
-    // Bitmasks used to represent wall sides on map
-    const WALL_TOP    = 0b0000_0001;
-    const WALL_RIGHT  = 0b0000_0010;
-    const WALL_BOTTOM = 0b0000_0100;
-    const WALL_LEFT   = 0b0000_1000;
-
-    // Bitmasks used to represent "doorways" on map (these doorways are blocked
-    // during a brawl.)
-    const OPEN_TOP    = 0b0001_0000;
-    const OPEN_RIGHT  = 0b0010_0000;
-    const OPEN_BOTTOM = 0b0100_0000;
-    const OPEN_LEFT   = 0b1000_0000;
-    const ROOM_ENDING = 25;
-
-    // Coordinates of the page count on the HUD (used by multiple modules since
-    // there is a little "page collected" animation).
-    const HUD_PAGE_U  = 47;
-    const HUD_PAGE_V  = 2;
-    const DIALOG_HINT_1     = 2;
-    const DIALOG_HINT_3     = 4;
-    const DIALOG_HINT_E1    = 6;
-    const DIALOG_HINT_E2    = 7;
-
-    // Some pre-calculated radian values
-    const R0          =   0;
-    const R20         =  20 * Math.PI / 180;
-    const R45         =  45 * Math.PI / 180;
-    const R70         =  70 * Math.PI / 180;
-    const R72         =  72 * Math.PI / 180;
-    const R90         =  90 * Math.PI / 180;
-    const R360        = 360 * Math.PI / 180;
+    // The size of our on-screen characters (given dimensions above, this is 80 cols by 25 rows).
+    const CHAR_WIDTH = 8;
+    const CHAR_HEIGHT = 16;
+    const CHARSHEET_WIDTH = 16 * CHAR_WIDTH;
 
     /**
      * Viewport
@@ -117,60 +84,12 @@
         }
     };
 
-    function normalizeVector(p) {
-        let m = Math.sqrt(p.x * p.x + p.y * p.y);
-        return m === 0 ? { x: 0, y: 0, m: 0 } : { x: p.x / m, y: p.y / m, m };
-    }
-
-    function vectorBetween(p1, p2) {
-        return normalizeVector({ x: p2.x - p1.x, y: p2.y - p1.y });
-    }
-
-    function angle2vector(r, m) {
-        return { x: Math.cos(r), y: Math.sin(r), m: m || 1 };
-    }
-
-    function vector2angle(v) {
-        let angle = Math.atan2(v.y, v.x);
-        if (angle < 0) angle += R360;
-        return angle;
-    }
-
-    function vector2point(v) {
-        return { x: v.x * (v.m || 1), y: v.y * (v.m || 1) };
-    }
-
-    // Takes a series of vectors and denormalizes them and adds them together, usually resulting
-    // in a point in space. Wrap in normalizeVector to get a normalized vector again, if desired.
-    function vectorAdd(...vectors) {
-        let v = { x: 0, y: 0, m: 1 };
-        for (let vector of vectors) {
-            v.x += vector.x * (vector.m || 1);
-            v.y += vector.y * (vector.m || 1);
-        }
-        return v;
-    }
-
-    function qr2xy(pos) {
-        return {
-            x: pos.q * 13,
-            y: pos.q * 6 + pos.r * 12
-        };
-    }
-
     function xy2qr(pos) {
         let qrFraction = {
             q: (pos.x / 13),
             r: ((pos.y - pos.x * 6 / 13) / 12)
         };
         return qrRounded(qrFraction);
-    }
-
-    function xy2uv(pos) {
-        return {
-            u: pos.x + Viewport.center.u - game.camera.pos.x,
-            v: pos.y + Viewport.center.v - game.camera.pos.y
-        };
     }
 
     function uv2xy(pos) {
@@ -216,277 +135,6 @@
         return qrs2qr(qrsB);
     }
 
-    function clamp(value, min, max) {
-        return value < min ? min : value > max ? max : value;
-    }
-
-    /**
-     * @param {XY[]} bounds  the upper-left and lower-right bounds
-     * @yields {QR}
-     */
-    function* tilesHitInBounds(bounds) {
-        for (let r = bounds[0].y / TILE_SIZE | 0; r * TILE_SIZE < bounds[1].y; r++) {
-            for (let q = bounds[0].x / TILE_SIZE | 0; q * TILE_SIZE <  bounds[1].x; q++) {
-                yield { q, r };
-            }
-        }
-    }
-
-    /**
-     * @param {XY} p1  the starting position
-     * @param {XY} p2  the ending position
-     * @param {number} r  the radius of the moving circle
-     * @yields {QR}
-     */
-    function* tilesHitBetweenCircle(p1, p2, r) {
-        let bounds = [
-            { x: Math.min(p1.x, p2.x) - r, y: Math.min(p1.y, p2.y) - r },
-            { x: Math.max(p1.x, p2.x) + r, y: Math.max(p1.y, p2.y) + r }
-        ];
-        yield* tilesHitInBounds(bounds);
-    }
-
-    /**
-     * @param {XY} p  the starting position
-     * @param {XY} v  the velocity (movement)
-     * @param {number} r  the radius of the moving circle
-     * @yields {QR}
-     */
-    function* tilesHitByCircle(p, v, r) {
-        yield* tilesHitBetweenCircle(p, { x: p.x + v.x, y: p.y + v.y }, r);
-    }
-
-    // See https://stackoverflow.com/a/18790389/80630
-    function intersectCircleRectangle(p1, p2, r, bounds) {
-        // If the bounding box around the start and end points (+radius on all
-        // sides) does not intersect with the rectangle, definitely not an
-        // intersection
-        if (
-            Math.max(p1.x, p2.x) + r < bounds[0].x ||
-            Math.min(p1.x, p2.x) - r > bounds[1].x ||
-            Math.max(p1.y, p2.y) + r < bounds[0].y ||
-            Math.min(p1.y, p2.y) - r > bounds[1].y
-        )
-            return;
-
-        let dx = p2.x - p1.x;
-        let dy = p2.y - p1.y;
-        let invdx = dx === 0 ? 0 : 1 / dx;
-        let invdy = dy === 0 ? 0 : 1 / dy;
-        let cornerX = Infinity;
-        let cornerY = Infinity;
-
-        // Check each side of the rectangle for a single-side intersection
-        // Left Side
-        if (p1.x - r < bounds[0].x && p2.x + r > bounds[0].x) {
-            let ltime = (bounds[0].x - r - p1.x) * invdx;
-            if (ltime >= 0 && ltime <= 1) {
-                let ly = dy * ltime + p1.y;
-                if (ly >= bounds[0].y && ly <= bounds[1].y) {
-                    return {
-                        x: dx * ltime + p1.x,
-                        y: ly,
-                        t: ltime,
-                        nx: -1,
-                        ny: 0,
-                        ix: bounds[0].x,
-                        iy: ly
-                    };
-                }
-            }
-            cornerX = bounds[0].x;
-        }
-        // Right Side
-        if (p1.x + r > bounds[1].x && p2.x - r < bounds[1].x) {
-            let rtime = (p1.x - (bounds[1].x + r)) * -invdx;
-            if (rtime >= 0 && rtime <= 1) {
-                let ry = dy * rtime + p2.y;
-                if (ry >= bounds[0].y && ry <= bounds[1].y) {
-                    return {
-                        x: dx * rtime + p1.x,
-                        y: ry,
-                        t: rtime,
-                        nx: 1,
-                        ny: 0,
-                        ix: bounds[1].x,
-                        iy: ry
-                    };
-                }
-            }
-            cornerX = bounds[1].x;
-        }
-        // Top Side
-        if (p1.y - r < bounds[0].y && p2.y + r > bounds[0].y) {
-            let ttime = (bounds[0].y - r - p1.y) * invdy;
-            if (ttime >= 0 && ttime <= 1) {
-                let tx = dx * ttime + p1.x;
-                if (tx >= bounds[0].x && tx <= bounds[1].x) {
-                    return {
-                        x: tx,
-                        y: dy * ttime + p1.y,
-                        t: ttime,
-                        nx: 0,
-                        ny: -1,
-                        ix: tx,
-                        iy: bounds[0].y
-                    };
-                }
-            }
-            cornerY = bounds[0].y;
-        }
-        // Bottom Side
-        if (p1.y + r > bounds[1].y && p2.y - r < bounds[1].y) {
-            let btime = (p1.y - (bounds[1].y + r)) * -invdy;
-            if (btime >= 0 && btime <= 1) {
-                let bx = dx * btime + p1.x;
-                if (bx >= bounds[0].x && bx <= bounds[1].x) {
-                    return {
-                        x: bx,
-                        y: dy * btime + p1.y,
-                        t: btime,
-                        nx: 0,
-                        ny: 1,
-                        ix: bx,
-                        iy: bounds[0].y
-                    };
-                }
-            }
-            cornerY = bounds[1].y;
-        }
-
-        // If we haven't touched anything, there is no collision
-        if (cornerX === Infinity && cornerY === Infinity) return;
-
-        // We didn't pass through a side but may be hitting the corner
-        if (cornerX !== Infinity && cornerY === Infinity) {
-            cornerY = dy > 0 ? bounds[1].y : bounds[0].y;
-        }
-        if (cornerY !== Infinity && cornerX === Infinity) {
-            cornerX = dx > 0 ? bounds[1].x : bounds[0].x;
-        }
-
-        /* Solve the triangle between the start, corner, and intersection point.
-         *
-         *           +-----------T-----------+
-         *           |                       |
-         *          L|                       |R
-         *           |                       |
-         *           C-----------B-----------+
-         *          / \
-         *         /   \r     _.-E
-         *        /     \ _.-'
-         *       /    _.-I
-         *      / _.-'
-         *     S-'
-         *
-         * S = start of circle's path
-         * E = end of circle's path
-         * LTRB = sides of the rectangle
-         * I = {ix, iY} = point at which the circle intersects with the rectangle
-         * C = corner of intersection (and collision point)
-         * C=>I (r) = {nx, ny} = radius and intersection normal
-         * S=>C = cornerdist
-         * S=>I = intersectionDistance
-         * S=>E = lineLength
-         * <S = innerAngle
-         * <I = angle1
-         * <C = angle2
-         */
-        let inverseRadius = 1 / r;
-        let lineLength = Math.sqrt(dx * dx + dy * dy);
-        let cornerdx = cornerX - p1.x;
-        let cornerdy = cornerY - p1.y;
-        let cornerDistance = Math.sqrt(cornerdx * cornerdx + cornerdy * cornerdy);
-        let innerAngle = Math.acos(
-            (cornerdx * dx + cornerdy * dy) / (lineLength * cornerDistance)
-        );
-
-        // If the circle is too close, no intersection
-        if (cornerDistance < r) return;
-
-        // If inner angle is zero, it's going to hit the corner straight on.
-        if (innerAngle === 0) {
-            let time = (cornerDistance - r) / lineLength;
-
-            // Ignore if time is outside boundaries of (p1, p2)
-            if (time > 1 || time < 0) return;
-
-            let ix = time * dx + p1.x;
-            let iy = time * dy + p1.y;
-            let nx = cornerdx / cornerDistance;
-            let ny = cornerdy / cornerDistance;
-
-            return isNaN(ix)
-                ? undefined
-                : { x: ix, y: iy, t: time, nx, ny, ix: cornerX, iy: cornerY };
-        }
-
-        let innerAngleSin = Math.sin(innerAngle);
-        let angle1Sin = innerAngleSin * cornerDistance * inverseRadius;
-
-        // If the angle is too large, there is no collision
-        if (Math.abs(angle1Sin) > 1) return;
-
-        let angle1 = Math.PI - Math.asin(angle1Sin);
-        let angle2 = Math.PI - innerAngle - angle1;
-        let intersectionDistance = (r * Math.sin(angle2)) / innerAngleSin;
-        let time = intersectionDistance / lineLength;
-
-        // Ignore if time is outside boundaries of (p1, p2)
-        if (time > 1 || time < 0) return;
-
-        let ix = time * dx + p1.x;
-        let iy = time * dy + p2.y;
-        let nx = (ix - cornerX) * inverseRadius;
-        let ny = (iy - cornerY) * inverseRadius;
-
-        return isNaN(ix)
-            ? undefined
-            : { x: ix, y: iy, t: time, nx, ny, ix: cornerX, iy: cornerY };
-    }
-
-    // https://stackoverflow.com/questions/18683179/how-to-fix-circles-overlap-in-collision-response
-    //
-    // This is an incredibly simple implementation that ASSUMES very small velocities. It doesn't attempt
-    // to answer the question about "when" the intersection happened like the method above - may
-    // fix that in future.
-    function intersectCircleCircle(p1, r1, v1, p2, r2, v2) {
-        [v1, v2] = [vector2point(v1), vector2point(v2)];
-        let a1 = { x: p1.x + v1.x, y: p1.y + v1.y };
-        let a2 = { x: p2.x + v2.x, y: p2.y + v2.y };
-        let delta = vectorBetween(a1, a2);
-        if (delta.m < r1 + r2) {
-            return { nx: delta.x, ny: delta.y, m: r1 + r2 - delta.m };
-        }
-    }
-
-    function intersectRectangles(rect1, rect2) {
-        if (rect1[0].x >= rect2[1].x || rect2[0].x >= rect1[1].x) return false;
-        if (rect1[0].y >= rect2[1].y || rect2[0].y >= rect1[1].y) return false;
-        return true;
-    }
-
-    function array2d(width, height, fn) {
-        return Array.from({ length: height }, () =>
-            Array.from({ length: width }, fn)
-        );
-    }
-
-    function tileIsPassable(q, r) {
-        if (game.brawl) {
-            let room = game.brawl.room;
-            if (
-                q < room.q ||
-                r < room.r ||
-                q >= room.q + room.w ||
-                r >= room.r + room.h
-            )
-                return false;
-        }
-        if (q < 0 || r < 0 || q >= game.maze.w || r >= game.maze.h) return false;
-        return !!game.maze.maze[r][q];
-    }
-
     function rgba(r, g, b, a) {
         return `rgba(${r},${g},${b},${a})`;
     }
@@ -497,23 +145,6 @@
         canvas.height = height;
         let ctx = canvas.getContext('2d');
         return { canvas, ctx };
-    }
-
-    function roomCenter(room) {
-        return {
-            x: (room.q + room.w / 2) * TILE_SIZE,
-            y: (room.r + room.h / 2) * TILE_SIZE
-        };
-    }
-
-    function partialText(text, t, d) {
-        let length = clamp(Math.ceil(t / d * text.length), 0, text.length),
-            substr = text.slice(0, length),
-            idx = text.indexOf(' ', length - 1);
-        if (idx < 0) idx = text.length;
-        if (idx - length > 0) substr += '#'.repeat(idx - length);
-
-        return substr;
     }
 
     /**
@@ -704,22 +335,22 @@
 
             // For keyboard, we support 8-point movement (S, E, SE, etc.)
             KeyboardAdapter.arrowDirections = [
-                { x:   R0, y:   R0, m: 0 },
-                { x:   R0, y: -R90, m: 1 },
-                { x:   R0, y:  R90, m: 1 },
-                { x:   R0, y:   R0, m: 0 },
-                { x: -R90, y:   R0, m: 1 },
-                { x: -R45, y: -R45, m: 1 },
-                { x: -R45, y:  R45, m: 1 },
-                { x: -R90, y:   R0, m: 1 },
-                { x:  R90, y:   R0, m: 1 },
-                { x:  R45, y: -R45, m: 1 },
-                { x:  R45, y:  R45, m: 1 },
-                { x:  R90, y:   R0, m: 1 },
-                { x:   R0, y:   R0, m: 0 },
-                { x:   R0, y: -R90, m: 1 },
-                { x:   R0, y:  R90, m: 1 },
-                { x:   R0, y:   R0, m: 0 }
+                { x:  0, y:  0, m: 0 },
+                { x:  0, y: -1, m: 1 },
+                { x:  0, y:  1, m: 1 },
+                { x:  0, y:  0, m: 0 },
+                { x: -1, y:  0, m: 1 },
+                { x: -1, y: -1, m: 1 },
+                { x: -1, y:  1, m: 1 },
+                { x: -1, y:  0, m: 1 },
+                { x:  1, y:  0, m: 1 },
+                { x:  1, y: -1, m: 1 },
+                { x:  1, y:  1, m: 1 },
+                { x:  1, y:  0, m: 1 },
+                { x:  0, y:  0, m: 0 },
+                { x:  0, y: -1, m: 1 },
+                { x:  0, y:  1, m: 1 },
+                { x:  0, y:  0, m: 0 }
             ];
 
             KeyboardAdapter.held = [];
@@ -1151,221 +782,17 @@
         onUp(action) {},
     };
 
-    /**
-     * This module is generated by `gulp buildAssets`.
-     *
-     * Format is [w, h, rooms, tunnels].
-     */
-    const Map =
-        /* <generated> */
-    [ 41,
-      61,
-      [ [ 24, 1, 5, 4, 5, 3 ],
-        [ 13, 4, 7, 3, 6, 3 ],
-        [ 33, 5, 6, 5, 7, 4 ],
-        [ 23, 7, 5, 5, 8, 2 ],
-        [ 11, 8, 5, 4, 9, 2 ],
-        [ 29, 11, 3, 3, 10, 1 ],
-        [ 18, 12, 4, 7, 11, 3 ],
-        [ 35, 12, 5, 5, 12, 5 ],
-        [ 24, 13, 3, 5, 13, 0 ],
-        [ 7, 14, 3, 5, 14, 0 ],
-        [ 11, 14, 5, 5, 15, 1 ],
-        [ 3, 16, 1, 1, 1 ],
-        [ 23, 20, 5, 5, 16, 3 ],
-        [ 33, 20, 6, 6, 17, 3 ],
-        [ 11, 21, 4, 4, 18, 2 ],
-        [ 18, 21, 3, 3, 19, 1 ],
-        [ 18, 26, 5, 4, 20, 3 ],
-        [ 27, 26, 5, 4, 21, 0 ],
-        [ 10, 27, 6, 4, 22, 3 ],
-        [ 24, 31, 10, 7, 23, 4 ],
-        [ 12, 32, 9, 4, 24, 5 ],
-        [ 10, 51, 12, 9, 25, 0 ] ],
-      [ 231,
-        41,
-        29,
-        4,
-        13,
-        1,
-        27,
-        10,
-        1,
-        1,
-        1,
-        28,
-        1,
-        1,
-        1,
-        1,
-        8,
-        41,
-        7,
-        41,
-        17,
-        12,
-        29,
-        30,
-        1,
-        1,
-        26,
-        12,
-        1,
-        1,
-        1,
-        1,
-        17,
-        1,
-        7,
-        3,
-        1,
-        8,
-        1,
-        2,
-        1,
-        1,
-        4,
-        6,
-        1,
-        12,
-        1,
-        1,
-        2,
-        9,
-        1,
-        1,
-        1,
-        1,
-        24,
-        2,
-        1,
-        1,
-        10,
-        1,
-        1,
-        21,
-        4,
-        1,
-        1,
-        23,
-        6,
-        6,
-        5,
-        24,
-        6,
-        11,
-        41,
-        1,
-        1,
-        30,
-        1,
-        6,
-        1,
-        1,
-        40,
-        41,
-        24,
-        12,
-        5,
-        24,
-        12,
-        40,
-        1,
-        41,
-        1,
-        1,
-        75,
-        10,
-        25,
-        6 ] ];
-    /* </generated> */
-
-    const MapLoader = {
-        createRoomLookup(rooms) {
-            return rooms.reduce((hash, room) => {
-                hash[room.roomNumber] = room;
-                return hash;
-            }, {});
-        },
-
-        createWalls(maze, rooms) {
-            let walls = array2d(maze[0].length, maze.length, () => 0);
-            for (let r = 0; r < walls.length; r++) {
-                for (let q = 0; q < walls[0].length; q++) {
-                    if (maze[r][q]) {
-                        let room = rooms[maze[r][q]];
-
-                        walls[r][q] =
-                            (maze[r - 1][q] ? 0 : WALL_TOP) |
-                            (maze[r][q + 1] ? 0 : WALL_RIGHT) |
-                            (maze[r + 1][q] ? 0 : WALL_BOTTOM) |
-                            (maze[r][q - 1] ? 0 : WALL_LEFT);
-
-                        if (room) {
-                            walls[r][q] |=
-                                (maze[r - 1][q] && r === room.r ? OPEN_TOP : 0) |
-                                (maze[r][q + 1] && (q === room.q + room.w - 1)
-                                    ? OPEN_RIGHT
-                                    : 0) |
-                                (maze[r + 1][q] && (r === room.r + room.h - 1)
-                                    ? OPEN_BOTTOM
-                                    : 0) |
-                                (maze[r][q - 1] && q === room.q ? OPEN_LEFT : 0);
-                        }
-                    }
-                }
-            }
-            return walls;
-        },
-
-        loadMap() {
-            let maze = array2d(Map[0], Map[1], () => 0);
-            let rooms = Map[2].map(room => ({
-                q: room[0],
-                r: room[1],
-                w: room[2],
-                h: room[3],
-                roomNumber: room[4],
-                pattern: room[5]
-            }));
-
-            let ptr = 0;
-            for (let next of Map[3]) {
-                ptr += next;
-                maze[(ptr / Map[0]) | 0][ptr % Map[0]] = 3;
-            }
-
-            for (let room of rooms) {
-                for (let r = 0; r < room.h; r++) {
-                    for (let q = 0; q < room.w; q++) {
-                        maze[room.r + r][room.q + q] = room.roomNumber;
-                    }
-                }
-            }
-
-            let roomLookup = this.createRoomLookup(rooms);
-
-            return {
-                maze,
-                walls: this.createWalls(maze, roomLookup),
-                rooms: roomLookup,
-                w: Map[0],
-                h: Map[1]
-            };
-        }
-    };
-
-    const C_WIDTH = 8;
-    const C_HEIGHT = 16;
-    const FONT_SHEET_WIDTH = 16 * C_WIDTH;
-
+    // In our character sheet, chars 0x00-0x7F are standard ASCII, below that we put whatever
+    // characters are convenient for us. Here we can choose to map unicode characters to positions
+    // 0x80+ in the charsheet, making it easy for us to render things like special characters,
+    // box drawing characters, etc.
     const SUPPORTED_UNICODE_CHARS = [
         '─│┌┐└┘├┤┬┴┼╳╳╳╳╳',
         '═║╔╗╚╝╠╣╦╩╬╳╳╳╳╳'
     ].join('');
 
     const UNICODE_CHAR_MAP = SUPPORTED_UNICODE_CHARS.split('').reduce((map, char, idx) => {
-        map[char] = 128 + idx;
+        map[char] = 0x80 + idx;
         return map;
     }, {});
 
@@ -1406,32 +833,32 @@
 
             for (let idx = 0; idx < text.length; idx++) {
                 let c = UNICODE_CHAR_MAP[text[idx]] || text.charCodeAt(idx);
-                let k = (c - 0) * (C_WIDTH);
+                let k = (c - 0) * (CHAR_WIDTH);
                 if (shadow) {
                     ctx.drawImage(
                         shadow,
-                        k % FONT_SHEET_WIDTH,
-                        (k / FONT_SHEET_WIDTH | 0) * C_HEIGHT,
-                        C_WIDTH,
-                        C_HEIGHT,
+                        k % CHARSHEET_WIDTH,
+                        Math.floor(k / CHARSHEET_WIDTH) * CHAR_HEIGHT,
+                        CHAR_WIDTH,
+                        CHAR_HEIGHT,
                         u + 1,
                         v,
-                        C_WIDTH * scale,
-                        C_HEIGHT * scale
+                        CHAR_WIDTH * scale,
+                        CHAR_HEIGHT * scale
                     );
                 }
                 ctx.drawImage(
                     font,
-                    k % FONT_SHEET_WIDTH,
-                    (k / FONT_SHEET_WIDTH | 0) * C_HEIGHT,
-                    C_WIDTH,
-                    C_HEIGHT,
+                    k % CHARSHEET_WIDTH,
+                    Math.floor(k / CHARSHEET_WIDTH) * CHAR_HEIGHT,
+                    CHAR_WIDTH,
+                    CHAR_HEIGHT,
                     u,
                     v,
-                    C_WIDTH * scale,
-                    C_HEIGHT * scale
+                    CHAR_WIDTH * scale,
+                    CHAR_HEIGHT * scale
                 );
-                u += C_WIDTH * scale;
+                u += CHAR_WIDTH * scale;
             }
         },
 
@@ -1443,7 +870,7 @@
         */
 
         measureWidth(text, scale = 1) {
-            return text.split('').reduce((sum, c) => sum + C_WIDTH, 0) * scale;
+            return text.split('').reduce((sum, c) => sum + CHAR_WIDTH, 0) * scale;
         },
 
         splitParagraph(text, w, h) {
@@ -1465,7 +892,7 @@
                     }
                     if (wip.text.length > 0) list.push(wip);
                     cu = 0;
-                    cv += (C_HEIGHT);
+                    cv += (CHAR_HEIGHT);
                     wip = next();
                     if (saved.length > 0) {
                         wip.text = saved;
@@ -1484,13 +911,12 @@
             return list.map(line => ({
                 ...line,
                 w: Text.measureWidth(line.text, 1),
-                h: C_HEIGHT
+                h: CHAR_HEIGHT
             }));
         }
     };
 
     // Text utility functions
-
 
     function recolor(font, color) {
         let canvas = createCanvas(font.width, font.height);
@@ -1501,300 +927,260 @@
         return canvas.canvas;
     }
 
-    // https://jonny.morrill.me/en/blog/gamedev-how-to-implement-a-camera-shake-effect/
-
     /**
-     * Shake it baby.
+     * Player
      */
-    class ScreenShake {
-        constructor(frames, hAmplitude, vAmplitude) {
-            this.frames = frames;
-            this.hAmplitude = hAmplitude;
-            this.vAmplitude = vAmplitude;
-            this.hSamples = [];
-            this.vSamples = [];
-
-            var sampleCount = frames / 2;
-            for (let i = 0; i < sampleCount; i++) {
-                this.hSamples.push(Math.random() * 2 - 1);
-                this.vSamples.push(Math.random() * 2 - 1);
-            }
-            this.frame = -1;
-        }
-
-        update() {
-            this.frame++;
-            if (this.frame >= this.frames) {
-                return false;
-            }
-
-            //let s = (this.frames / 10) * (this.frame / this.frames);
-            let s = this.frame / 2;
-            let s0 = s | 0;
-            let s1 = s0 + 1;
-            let decay = 1 - this.frame / this.frames;
-
-            this.x =
-                this.hAmplitude *
-                decay *
-                (this.hSamples[s0] +
-                    (s - s0) * (this.hSamples[s1] - this.hSamples[s0]));
-            this.y =
-                this.vAmplitude *
-                decay *
-                (this.vSamples[s0] +
-                    (s - s0) * (this.vSamples[s1] - this.vSamples[s0]));
-
-            return true;
-        }
-    }
-
-    /**
-     * Behavior
-     */
-    const CHASE     = 103;
-    const DEAD      = 106;
-    const SPAWN     = 107;
-    const ATTACK    = 201;
-    const RELOAD    = 202;
-
-    class Gore {
-        constructor(pos, angle, f) {
-            this.pos = { ...pos };
-            this.angle = angle;
-            this.vel = vector2point(angle2vector(this.angle, f ? 8 : 5));
-            this.a = R45;
-            this.noClipEntity = true;
-            this.f = f;
-            this.bounce = true;
-            this.radius = 1;
-            this.r = 0;
-            this.t = -1;
-            this.d = this.f === 0 ? 45 : 70;
-        }
-
-        think() {
-            if (++this.t === this.d) this.cull = true;
-            this.vel.x *= 0.9;
-            this.vel.y *= 0.9;
-            this.a *= 0.95;
-            this.r += this.a;
-        }
-
-        draw() {
-            Sprite.drawViewportSprite(
-                Sprite.gore[this.f],
-                this.pos,
-                this.r
-            );
-        }
-    }
-
-    Gore.damage = entity => Gore.spray(entity, 8, () => 0);
-    Gore.kill = entity => Gore.spray(entity, 16, () => (Math.random() * 4) | 0);
-    Gore.spray = (entity, count, cb) => {
-        let angle = entity.lastDamage ? vector2angle(entity.lastDamage.vector) : Math.random() * R360;
-
-        for (let i = 0; i < count * (game.victory ? 2 : 1); i++) {
-            let r = Math.random() * entity.radius,
-                p = vectorAdd(entity.pos, angle2vector(Math.random() * R360, r));
-            game.entities.push(
-                new Gore(p, angle + Math.random() * R90 - R45, cb())
-            );
-        }
-    };
-
-    class SpawnAnimation {
-        constructor(pos) {
-            this.pos = { ...pos };
-            this.t = -1;
-            this.d = 40;
-            this.z = 101;
-        }
-
-        think() {
-            if (++this.t === this.d) this.cull = true;
-        }
-
-        draw() {
-            let chars = ['s', 't', 'u', 'v', 'w'];
-            let uv = xy2uv(this.pos);
-
-            Viewport.ctx.globalAlpha = 1 - (this.t / this.d);
-            for (let i = 0; i < 5; i++) {
-                let v = vector2point(angle2vector(R72 * i + this.t / 36, 12));
-                Text.drawText(Viewport.ctx, chars[i], uv.u + v.x + Math.random() * 2 - 2, uv.v + v.y + Math.random() * 2 - 3, 1, Text.blue, Text.blue_shadow);
-            }
-            Viewport.ctx.globalAlpha = 1;
-        }
-    }
-
-    class HealthChunkAnimation {
-        constructor(start, amount) {
-            this.start = start;
-            this.amount = amount;
-            this.t = -1;
-            this.d = 20;
-            this.z = 101;
-            this.y = 5;
-            this.vel = -0.7;
-            this.gravity = 0.09;
-        }
-
-        think() {
-            if (++this.t === this.d) this.cull = true;
-            this.y += this.vel;
-            this.vel += this.gravity;
-        }
-
-        draw() {
-            let x = this.start - this.amount + 8;
-
-            if (this.t > 15) Viewport.ctx.globalAlpha = 1 - this.t * 0.1;
-            Viewport.ctx.drawImage(
-                Sprite.hud_healthbar[2].img,
-                x,
-                3,
-                this.amount,
-                3,
-                x + 2,
-                this.y,
-                this.amount,
-                3
-            );
-            Viewport.ctx.globalAlpha = 1;
-        }
-    }
-
-    /**
-     * Monster
-     */
-    class Stabguts {
-        constructor(pos) {
-            this.pos = { ...pos };
-            this.hp = 200;
-            this.damage = [];
+    class Player {
+        constructor() {
+            this.pos = { x: 0, y: 0 };
             this.vel = { x: 0, y: 0 };
-            this.facing = { x: 0, y: -1, m: 0 };
-            this.radius = 8;
-            this.mass = 0.5;
-            this.lastAttack = 0;
-            this.state = CHASE;
-            this.enemy = true;
-            game.dialogPending[DIALOG_HINT_E1] = true;
-        }
-
-        think() {
-            let diff = this.facing = vectorBetween(this.pos, game.player.pos);
-            this.facingAngle = vector2angle(this.facing);
-            if (this.state === CHASE) {
-                if (diff.m < 38 && Math.random() < 0.05 && game.frame > this.lastAttack + 60) {
-                    this.state = RELOAD;
-                    this.frames = 24;
-                }
-                diff.m = clamp(diff.m, 0, 0.75);
-                this.vel = {
-                    x: (this.vel.x + diff.x * diff.m) / 2,
-                    y: (this.vel.y + diff.y * diff.m) / 2
-                };
-            } else if (this.state === RELOAD) {
-                if (this.frames-- === 0) {
-                    this.state = ATTACK;
-                    this.frames = 12;
-                }
-                this.vel = { x: 0, y: 0 };
-            } else if (this.state === ATTACK) {
-                if (this.frames-- === 0) {
-                    this.state = CHASE;
-                    this.lastAttack = game.frame;
-                }
-                if (this.frames === 1 && diff.m < 23) {
-                    game.player.damage.push({
-                        amount: 12,
-                        vector: diff,
-                        knockback: 5
-                    });
-                }
-                diff.m = clamp(diff.m, 0, 3);
-                this.vel = { x: diff.x * diff.m, y: diff.y * diff.m };
-            } else if (this.state === DEAD) {
-                this.cull = true;
-                Gore.kill(this);
-                game.entities.push(new Page(this.pos, 1));
-                game.entities.push(new Page(this.pos, 2));
-            }
-        }
-
-        draw() {
-            let sprite = Sprite.stabguts[((game.frame / 12) | 0) % 2];
-            this.state === RELOAD && (sprite = Sprite.stabguts[2]);
-            this.state === ATTACK && (sprite = Sprite.stabguts[3]);
-            Sprite.drawViewportSprite(
-                sprite,
-                this.pos,
-                this.facingAngle + R90
-            );
-        }
-    }
-
-    /**
-     * Monster
-     */
-    class Spindoctor {
-        constructor(pos) {
-            this.pos = { ...pos };
+            this.bbox = [{ x: -6, y: -6 }, { x: 6, y: 6 }];
             this.hp = 100;
             this.damage = [];
-            this.radius = 3;
-            this.mass = 1;
-            this.bounce = true;
-            this.enemy = true;
-            game.dialogPending[DIALOG_HINT_E2] = true;
-
-            // Kick off at random angles, but, it looks weird to have straight horizontal
-            // or vertical angles - so avoid anything within +- 20 degrees of a straight angle.
-            let angle = Math.random() * R360;
-            if (angle % R90 < R20) angle += R20;
-            if (angle % R90 > R70) angle -= R20;
-            this.facing = angle2vector(angle);
-            this.vel = this.facing;
-            this.state = CHASE;
+            this.history = [];
+            this.facing = { x: 0, y: -1, m: 0 };
+            this.radius = 11;
+            this.shellsLeft = 4;
+            this.shellsMax = 4;
+            this.forcedReload = false;
+            this.mass = 3;
+            this.pages = 0;
+            this.deaths = 0;
+            this.state = 1;
+            this.frames = 29;
         }
 
         think() {
-            if (this.state === CHASE) {
-                let v = normalizeVector(this.vel);
-                v.m = (v.m + 2.5) / 2;
-                this.vel = vector2point(v);
-
-                let dist = vectorBetween(this.pos, game.player.pos);
-                if (dist.m <= this.radius + game.player.radius) {
-                    game.player.damage.push({
-                        amount: 5,
-                        vector: dist,
-                        knockback: 3
-                    });
-                }
-            } else if (this.state === DEAD) {
-                this.cull = true;
-                Gore.kill(this);
-                game.entities.push(new Page(this.pos, 1));
-                game.entities.push(new Page(this.pos, 2));
-            }
+            this.vel = {
+                x: Input.direction.x * Input.direction.m * 0.7,
+                y: Input.direction.y * Input.direction.m * 0.7
+            };
         }
 
         draw() {
-            Sprite.drawViewportSprite(Sprite.spindoctor[0], this.pos, game.frame / 5);
-            Sprite.drawViewportSprite(Sprite.spindoctor[1], this.pos);
+            let sprite = Sprite.harold[0];
+            //let p = { x: Math.round(this.pos.x), y: Math.round(this.pos.y) };
+            let p = this.pos;
+            Sprite.drawViewportSprite(sprite, p);
         }
     }
+
+    /**
+     * Movement
+     */
+    const Movement = {
+        perform() {
+        }
+
+        /*
+        perform(entities) {
+            // Movement only applies to active entities with positions and velocities
+            let movers = entities.filter(
+                entity => entity.pos && entity.vel && !entity.cull
+            );
+
+            for (let i = 0; i < movers.length; i++) {
+                let mover = movers[i];
+                mover.pos.x += mover.vel.x;
+                mover.pos.y += mover.vel.y;
+
+                let bounds = [
+                    { x: mover.pos.x + mover.bbox[0].x, y: mover.pos.y + mover.bbox[0].y },
+                    { x: mover.pos.x + mover.bbox[1].x, y: mover.pos.y + mover.bbox[1].y }
+                ];
+
+                for (let terrain of World.terrain) {
+                    let floors = Terrain.objects[terrain.t].floors.map(floor =>
+                        floor.map(p => ({ x: p.x + terrain.x, y: p.y + terrain.y }))
+                    );
+                    for (let floor of floors) {
+                        if (intersectRectangles(bounds, floor)) {
+                            mover.pos.y = floor[1].y + mover.bbox[0].y;
+                        }
+                    }
+                }
+            }
+
+            /*for (let i = 0; i < movers.length; i++) {
+                let mover = movers[i];
+
+                let movingBounds = [
+                    {
+                        x: mover.pos.x - mover.bbox[0].x,
+                        y: mover.pos.y - mover.bbox[0].y
+                    },
+                    {
+                        x: mover.pos.x + mover.bbox[1].x + mover.vel.x,
+                        y: mover.pos.y + mover.bbox[1].y + mover.vel.y
+                    }
+                ];
+
+                console.log("===");
+                for (let terrain of World.terrain) {
+                    console.log("terrain");
+                    let floors = Terrain.objects[terrain.t].floors.map(floor => [
+                        { x: terrain.x + floor[0].x, y: terrain.y + floor[0].y },
+                        { x: terrain.x + floor[1].x, y: terrain.y + floor[1].y }
+                    ]);
+
+                    for (let floor of floors) {
+                        console.log("floor");
+                        if (intersectRectangles(movingBounds, floor)) {
+                            let diff = movingBounds[1].y - floor[0].y;
+                            console.log(diff, movingBounds[1].y, floor[0].y);
+                            mover.vel.y -= diff;
+                            console.log(mover.vel.y);
+
+                            movingBounds = [
+                                {
+                                    x: mover.pos.x - mover.bbox[0].x,
+                                    y: mover.pos.y - mover.bbox[0].y
+                                },
+                                {
+                                    x: mover.pos.x + mover.bbox[1].x + mover.vel.x,
+                                    y: mover.pos.y + mover.bbox[1].y + mover.vel.y
+                                }
+                            ];
+                            console.log(movingBounds);
+                        }
+                    }
+                }
+                console.log("===");
+
+                mover.pos.x += mover.vel.x;
+                mover.pos.y += mover.vel.y;
+
+
+            }
+
+            return;
+            // Very basic "rounds" of collision resolution, since we have no real physics.
+            // (As usual, "detecting" a collision is not the hard part... we need to resolve
+            // them too!)
+            for (let rounds = 0; rounds < 5; rounds++) {
+                // Each pair of entities only needs to interact once.
+                for (let i = 0; i < movers.length - 1; i++) {
+                    for (let j = i + 1; j < movers.length; j++) {
+                        Movement.clipVelocityEntityVsEntity(movers[i], movers[j]);
+                    }
+                }
+
+                for (let entity of movers) {
+                    Movement.clipVelocityAgainstWalls(entity);
+                }
+            }
+
+            // Now we perform all movement, even if it's not going to be perfect.
+            for (let entity of movers) {
+                entity.pos.x += entity.vel.x;
+                entity.pos.y += entity.vel.y;
+            }
+        },
+
+        clipVelocityEntityVsEntity(entity, other) {
+            if (entity.noClipEntity || other.noClipEntity) return;
+
+            let hit = intersectCircleCircle(
+                entity.pos,
+                entity.radius,
+                entity.vel,
+                other.pos,
+                other.radius,
+                other.vel
+            );
+            if (hit) {
+                if (entity.bounce && other.bounce) {
+                    entity.vel.x = -hit.nx * hit.m;
+                    entity.vel.y = -hit.ny * hit.m;
+                    other.vel.x = hit.nx * hit.m;
+                    other.vel.y = hit.ny * hit.m;
+                } else {
+                    // Not a bug: we "add" the mass of the opposing entity to our own velocity when deciding who
+                    // is at fault for the collision. Entity velocities adjust in relation to their fault level.
+                    let entityM = normalizeVector(entity.vel).m + other.mass,
+                        otherM = normalizeVector(other.vel).m + entity.mass,
+                        entityI = entity.bounce ? 0.1 : 1,
+                        otherI = other.bounce ? 0.1 : 1;
+                    entity.vel.x -=
+                        (hit.nx * hit.m * entityI * entityM) / (entityM + otherM);
+                    entity.vel.y -=
+                        (hit.ny * hit.m * entityI * entityM) / (entityM + otherM);
+                    other.vel.x +=
+                        (hit.nx * hit.m * otherI * otherM) / (entityM + otherM);
+                    other.vel.y +=
+                        (hit.ny * hit.m * otherI * otherM) / (entityM + otherM);
+                }
+            }
+        },
+
+        clipVelocityAgainstWalls(entity) {
+            if (entity.noClipWall) return;
+
+            for (let tile of tilesHitByCircle(
+                entity.pos,
+                entity.vel,
+                entity.radius
+            )) {
+                if (!tileIsPassable(tile.q, tile.r)) {
+                    let bounds = [
+                        qr2xy(tile),
+                        qr2xy({ q: tile.q + 1, r: tile.r + 1 })
+                    ];
+                    let hit = intersectCircleRectangle(
+                        entity.pos,
+                        {
+                            x: entity.pos.x + entity.vel.x,
+                            y: entity.pos.y + entity.vel.y
+                        },
+                        entity.radius,
+                        bounds
+                    );
+
+                    // The "math" part of detecting collision with walls is buried in the geometry functions
+                    // above, but it's not the whole story -- if we do detect a collision, we still need to
+                    // decide what to do about it.
+                    //
+                    // If the normal vector is horizontal or vertical, we zero out the portion of the vector
+                    // moving into the wall, allowing frictionless sliding (if we wanted to perform friction,
+                    // we could also reduce the other axis slightly).
+                    //
+                    // If the normal vector is not 90*, we "back up" off the wall by exactly the normal vector.
+                    // If the player runs into a corner at EXACTLY a 45 degree angle, they will simply "stick"
+                    // on it -- but one degree left or right and they'll slide around the corner onto the wall,
+                    // which is the desired result.
+                    if (hit) {
+                        if (entity.bounce) {
+                            if (hit.nx === 0) {
+                                entity.vel.y = -entity.vel.y;
+                            } else if (hit.ny === 0) {
+                                entity.vel.x = -entity.vel.x;
+                            } else {
+                                entity.vel.x += hit.nx;
+                                entity.vel.y += hit.ny;
+                            }
+                        } else {
+                            if (hit.nx === 0) {
+                                entity.vel.y = hit.y - entity.pos.y;
+                            } else if (hit.ny === 0) {
+                                entity.vel.x = hit.x - entity.pos.x;
+                            } else {
+                                entity.vel.x += hit.nx;
+                                entity.vel.y += hit.ny;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        */
+    };
 
     /**
      * Victory
      */
     const Victory = {
         perform() {
-            if (game.player.pages >= 404 && !game.victory) {
+            /*if (game.player.pages >= 404 && !game.victory) {
                 Victory.frame = 0;
                 game.victory = true;
                 game.player.pos = roomCenter(game.maze.rooms[ROOM_ENDING]);
@@ -1820,23 +1206,9 @@
                     game.entities.push(enemy);
                     game.entities.push(new SpawnAnimation(pos));
                 }
-            }
+            }*/
         }
     };
-
-    /**
-     * This helper class encapsulates creating temporary off-screen canvases. Off-screen
-     * canvases are great tools for building patterns, image masks, and other components
-     * that we'll use to draw things on the primary canvas.
-     */
-    class Canvas {
-        constructor(width, height) {
-            this.canvas = document.createElement('canvas');
-            this.canvas.width = width;
-            this.canvas.height = height;
-            this.ctx = this.canvas.getContext('2d');
-        }
-    }
 
     /**
      * Hud
@@ -1845,13 +1217,13 @@
      */
     const Hud = {
         init() {
-            Hud.tooltipCanvas = new Canvas(GAME_WIDTH, GAME_HEIGHT);
+    //        Hud.tooltipCanvas = new Canvas(GAME_WIDTH, GAME_HEIGHT);
         },
 
         draw() {
             return;
         },
-
+    /*
         drawPageArrow() {
             let page = Hud.closestPage();
             if (page) {
@@ -1860,6 +1232,7 @@
                 vector.m = clamp(vector.m / 2, 16, Viewport.height / 2 - 5);
                 if (vector.m > 64) {
                     let xy = vectorAdd(game.player.pos, vector);
+                    let a = Math.sin(game.frame / 60)
                     Viewport.ctx.globalAlpha = Math.sin(game.frame / 20) * 0.2 + 0.8;
                     Sprite.drawViewportSprite(Sprite.page[2], xy, angle + R90);
                     Viewport.ctx.globalAlpha = 1;
@@ -1978,7 +1351,7 @@
             // random lightning effect!
             //Hud.drawLightning(30, 60, 120, 90);
             Hud.drawLightning(30, 60, uv.u, uv.v);
-            */
+
         },
 
         drawLightning2(x1, y1, x2, y2) {
@@ -2094,124 +1467,54 @@
             Viewport.ctx.fillStyle = '#c0cbdc';
             Viewport.ctx.fillRect(0, Viewport.height - height - 3, Viewport.width, 1);
         }
+        */
     };
 
-    class PageCollectedAnimation {
-        constructor(pos, amount) {
-            this.t = -1;
-            this.d = 40;
-            this.z = 101;
-
-            this.a = Sprite.viewportSprite2uv(
-                Sprite.page[0],
-                pos
-            );
-            this.a.u -= Sprite.page[0].anchor.x;
-            this.a.v -= Sprite.page[0].anchor.y;
-            this.b = { u: Viewport.width - HUD_PAGE_U, v: HUD_PAGE_V };
-            this.amount = amount;
-        }
-
-        think() {
-            if (this.t === 10) {
-                Audio.play(Audio.page);
-            }
-
-            if (this.t % 8 === 0) {
-                game.player.hp = clamp(game.player.hp + 1, 0, 100);
-            }
-
-            if (++this.t === this.d) {
-                this.cull = true;
-                game.player.pages += this.amount;
-                Hud.pageGlow = 1;
-            }
-        }
-
-        draw() {
-            let uv = {
-                u: ((this.b.u - this.a.u) * this.t) / this.d + this.a.u,
-                v: ((this.b.v - this.a.v) * this.t) / this.d + this.a.v
-            };
-
-            Viewport.ctx.drawImage(Sprite.page[0].img, uv.u, uv.v);
-        }
-    }
+    // https://jonny.morrill.me/en/blog/gamedev-how-to-implement-a-camera-shake-effect/
 
     /**
-     * Page
+     * Shake it baby.
      */
-    class Page {
-        constructor(pos, amount) {
-            this.pos = { ...pos };
-            this.amount = amount;
-            this.angle = Math.random() * R360;
-            this.vel = vector2point(angle2vector(this.angle, Math.random() * 3 + 1));
-            this.baseFrame = (Math.random() * 60) | 0;
-            //this.mass = 1;
-            this.radius = 3;
-            this.noClipEntity = true;
-            this.page = true;
-            if (game.victory) this.cull = true;
-        }
+    class ScreenShake {
+        constructor(frames, hAmplitude, vAmplitude) {
+            this.frames = frames;
+            this.hAmplitude = hAmplitude;
+            this.vAmplitude = vAmplitude;
+            this.hSamples = [];
+            this.vSamples = [];
 
-        think() {
-            this.vel.x *= 0.95;
-            this.vel.y *= 0.95;
-
-            let v = vectorBetween(this.pos, game.player.pos);
-            if (v.m < game.player.radius + this.radius + 2 && game.player.state !== DEAD && game.player.state !== SPAWN) {
-                this.cull = true;
-                game.entities.push(new PageCollectedAnimation(this.pos, this.amount));
+            var sampleCount = frames / 2;
+            for (let i = 0; i < sampleCount; i++) {
+                this.hSamples.push(Math.random() * 2 - 1);
+                this.vSamples.push(Math.random() * 2 - 1);
             }
+            this.frame = -1;
         }
 
-        draw() {
-            let pos = {
-                x: this.pos.x,
-                y: this.pos.y + Math.sin((game.frame + this.baseFrame) / 30) * 2
-            };
+        update() {
+            this.frame++;
+            if (this.frame >= this.frames) {
+                return false;
+            }
 
-            Sprite.drawViewportSprite(Sprite.page[1], pos);
-            Sprite.drawViewportSprite(Sprite.page[0], pos);
-        }
-    }
+            //let s = (this.frames / 10) * (this.frame / this.frames);
+            let s = this.frame / 2;
+            let s0 = s | 0;
+            let s1 = s0 + 1;
+            let decay = 1 - this.frame / this.frames;
 
-    /**
-     * Player
-     */
-    class Player {
-        constructor() {
-            this.pos = { x: 0, y: 0 };
-            this.vel = { x: 0, y: 0 };
-            this.bbox = [{ x: -6, y: -6 }, { x: 6, y: 6 }];
-            this.hp = 100;
-            this.damage = [];
-            this.history = [];
-            this.facing = { x: 0, y: -1, m: 0 };
-            this.radius = 11;
-            this.shellsLeft = 4;
-            this.shellsMax = 4;
-            this.forcedReload = false;
-            this.mass = 3;
-            this.pages = 0;
-            this.deaths = 0;
-            this.state = 1;
-            this.frames = 29;
-        }
+            this.x =
+                this.hAmplitude *
+                decay *
+                (this.hSamples[s0] +
+                    (s - s0) * (this.hSamples[s1] - this.hSamples[s0]));
+            this.y =
+                this.vAmplitude *
+                decay *
+                (this.vSamples[s0] +
+                    (s - s0) * (this.vSamples[s1] - this.vSamples[s0]));
 
-        think() {
-            this.vel = {
-                x: Input.direction.x * Input.direction.m * 0.7,
-                y: Input.direction.y * Input.direction.m * 0.7
-            };
-        }
-
-        draw() {
-            let sprite = Sprite.harold[0];
-            //let p = { x: Math.round(this.pos.x), y: Math.round(this.pos.y) };
-            let p = this.pos;
-            Sprite.drawViewportSprite(sprite, p);
+            return true;
         }
     }
 
@@ -2241,356 +1544,6 @@
     };
 
     /**
-     * Movement
-     */
-    const Movement = {
-        perform(entities) {
-            // Movement only applies to active entities with positions and velocities
-            let movers = entities.filter(
-                entity => entity.pos && entity.vel && !entity.cull
-            );
-
-            for (let i = 0; i < movers.length; i++) {
-                let mover = movers[i];
-                mover.pos.x += mover.vel.x;
-                mover.pos.y += mover.vel.y;
-
-                let bounds = [
-                    { x: mover.pos.x + mover.bbox[0].x, y: mover.pos.y + mover.bbox[0].y },
-                    { x: mover.pos.x + mover.bbox[1].x, y: mover.pos.y + mover.bbox[1].y }
-                ];
-
-                for (let terrain of World.terrain) {
-                    let floors = Terrain.objects[terrain.t].floors.map(floor =>
-                        floor.map(p => ({ x: p.x + terrain.x, y: p.y + terrain.y }))
-                    );
-                    for (let floor of floors) {
-                        if (intersectRectangles(bounds, floor)) {
-                            mover.pos.y = floor[1].y + mover.bbox[0].y;
-                        }
-                    }
-                }
-            }
-
-            /*for (let i = 0; i < movers.length; i++) {
-                let mover = movers[i];
-
-                let movingBounds = [
-                    {
-                        x: mover.pos.x - mover.bbox[0].x,
-                        y: mover.pos.y - mover.bbox[0].y
-                    },
-                    {
-                        x: mover.pos.x + mover.bbox[1].x + mover.vel.x,
-                        y: mover.pos.y + mover.bbox[1].y + mover.vel.y
-                    }
-                ];
-
-                console.log("===");
-                for (let terrain of World.terrain) {
-                    console.log("terrain");
-                    let floors = Terrain.objects[terrain.t].floors.map(floor => [
-                        { x: terrain.x + floor[0].x, y: terrain.y + floor[0].y },
-                        { x: terrain.x + floor[1].x, y: terrain.y + floor[1].y }
-                    ]);
-
-                    for (let floor of floors) {
-                        console.log("floor");
-                        if (intersectRectangles(movingBounds, floor)) {
-                            let diff = movingBounds[1].y - floor[0].y;
-                            console.log(diff, movingBounds[1].y, floor[0].y);
-                            mover.vel.y -= diff;
-                            console.log(mover.vel.y);
-
-                            movingBounds = [
-                                {
-                                    x: mover.pos.x - mover.bbox[0].x,
-                                    y: mover.pos.y - mover.bbox[0].y
-                                },
-                                {
-                                    x: mover.pos.x + mover.bbox[1].x + mover.vel.x,
-                                    y: mover.pos.y + mover.bbox[1].y + mover.vel.y
-                                }
-                            ];
-                            console.log(movingBounds);
-                        }
-                    }
-                }
-                console.log("===");
-
-                mover.pos.x += mover.vel.x;
-                mover.pos.y += mover.vel.y;
-
-
-            }*/
-
-            return;
-        },
-
-        clipVelocityEntityVsEntity(entity, other) {
-            if (entity.noClipEntity || other.noClipEntity) return;
-
-            let hit = intersectCircleCircle(
-                entity.pos,
-                entity.radius,
-                entity.vel,
-                other.pos,
-                other.radius,
-                other.vel
-            );
-            if (hit) {
-                if (entity.bounce && other.bounce) {
-                    entity.vel.x = -hit.nx * hit.m;
-                    entity.vel.y = -hit.ny * hit.m;
-                    other.vel.x = hit.nx * hit.m;
-                    other.vel.y = hit.ny * hit.m;
-                } else {
-                    // Not a bug: we "add" the mass of the opposing entity to our own velocity when deciding who
-                    // is at fault for the collision. Entity velocities adjust in relation to their fault level.
-                    let entityM = normalizeVector(entity.vel).m + other.mass,
-                        otherM = normalizeVector(other.vel).m + entity.mass,
-                        entityI = entity.bounce ? 0.1 : 1,
-                        otherI = other.bounce ? 0.1 : 1;
-                    entity.vel.x -=
-                        (hit.nx * hit.m * entityI * entityM) / (entityM + otherM);
-                    entity.vel.y -=
-                        (hit.ny * hit.m * entityI * entityM) / (entityM + otherM);
-                    other.vel.x +=
-                        (hit.nx * hit.m * otherI * otherM) / (entityM + otherM);
-                    other.vel.y +=
-                        (hit.ny * hit.m * otherI * otherM) / (entityM + otherM);
-                }
-            }
-        },
-
-        clipVelocityAgainstWalls(entity) {
-            if (entity.noClipWall) return;
-
-            for (let tile of tilesHitByCircle(
-                entity.pos,
-                entity.vel,
-                entity.radius
-            )) {
-                if (!tileIsPassable(tile.q, tile.r)) {
-                    let bounds = [
-                        qr2xy(tile),
-                        qr2xy({ q: tile.q + 1, r: tile.r + 1 })
-                    ];
-                    let hit = intersectCircleRectangle(
-                        entity.pos,
-                        {
-                            x: entity.pos.x + entity.vel.x,
-                            y: entity.pos.y + entity.vel.y
-                        },
-                        entity.radius,
-                        bounds
-                    );
-
-                    // The "math" part of detecting collision with walls is buried in the geometry functions
-                    // above, but it's not the whole story -- if we do detect a collision, we still need to
-                    // decide what to do about it.
-                    //
-                    // If the normal vector is horizontal or vertical, we zero out the portion of the vector
-                    // moving into the wall, allowing frictionless sliding (if we wanted to perform friction,
-                    // we could also reduce the other axis slightly).
-                    //
-                    // If the normal vector is not 90*, we "back up" off the wall by exactly the normal vector.
-                    // If the player runs into a corner at EXACTLY a 45 degree angle, they will simply "stick"
-                    // on it -- but one degree left or right and they'll slide around the corner onto the wall,
-                    // which is the desired result.
-                    if (hit) {
-                        if (entity.bounce) {
-                            if (hit.nx === 0) {
-                                entity.vel.y = -entity.vel.y;
-                            } else if (hit.ny === 0) {
-                                entity.vel.x = -entity.vel.x;
-                            } else {
-                                entity.vel.x += hit.nx;
-                                entity.vel.y += hit.ny;
-                            }
-                        } else {
-                            if (hit.nx === 0) {
-                                entity.vel.y = hit.y - entity.pos.y;
-                            } else if (hit.ny === 0) {
-                                entity.vel.x = hit.x - entity.pos.x;
-                            } else {
-                                entity.vel.x += hit.nx;
-                                entity.vel.y += hit.ny;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    /**
-     * Damage
-     */
-    const Damage = {
-        perform(entities) {
-            let hit = false;
-            for (let entity of entities) {
-                if (entity.hp) {
-                    if (entity.damage.length > 0) {
-                        if (entity.state !== DEAD && entity.state !== SPAWN) {
-                            for (let damage of entity.damage) {
-                                if (entity === game.player) {
-                                    game.entities.push(
-                                        new HealthChunkAnimation(
-                                            entity.hp,
-                                            damage.amount
-                                        )
-                                    );
-                                }
-                                entity.hp -= damage.amount;
-                                damage.vector.m = damage.knockback;
-                                entity.vel = vectorAdd(entity.vel, damage.vector);
-                                entity.lastDamage = damage;
-                                Gore.damage(entity);
-                                hit = true;
-                            }
-                        }
-                        entity.damage = [];
-                    }
-                    if (entity.hp <= 0 && entity.state !== DEAD) {
-                        entity.state = DEAD;
-                    }
-                }
-            }
-
-            if (hit) Audio.play(Audio.damage);
-        }
-    };
-
-    class Dialog {
-        constructor(key) {
-            let dialog = Dialog.details[key];
-            this.flag = key;
-            this.text = dialog.text;
-            this.speech = dialog.speech;
-            this.blockReload = dialog.blockReload;
-            this.blockFire = dialog.blockFire;
-            if (this.speech) {
-                this.blockMove = this.blockFire = this.blockReload = true;
-            }
-            this.t = 0;
-            this.d = this.speech ? 100 : 40;
-            this.z = 102;
-            game.dialog = this;
-        }
-
-        think() {
-            if (this.t < this.d) this.t++;
-            game.dialogSeen[this.flag] = true;
-
-            if (this.flag === DIALOG_HINT_1) {
-                if (Input.direction.m > 0) {
-                    this.cull = true;
-                    game.dialog = false;
-                }
-            } else if (this.flag === DIALOG_HINT_3) {
-                if (Input.pressed[Input.Action.RELOAD]) {
-                    this.cull = true;
-                    game.dialog = false;
-                }
-            } else {
-                if (Input.pressed[Input.Action.ATTACK]) {
-                    if (this.t < this.d) {
-                        this.t = this.d;
-                    } else {
-                        this.cull = true;
-                        game.dialog = false;
-                    }
-                }
-            }
-        }
-
-        draw() {
-            let sprite = Sprite.dialog_speech,
-                spriteu = Viewport.center.u + 5,
-                spritev = Viewport.center.v + 8,
-                textu = spriteu + 8,
-                textv = spritev + 12;
-
-            if (!this.speech) {
-                sprite = Sprite.dialog_hint;
-                spriteu = Viewport.center.u - Sprite.dialog_hint.img.width / 2;
-                spritev = Viewport.height - Sprite.dialog_hint.img.height - 8;
-                textu = spriteu + 5;
-                textv = spritev + 5;
-            }
-
-            Viewport.ctx.drawImage(sprite.img, spriteu, spritev);
-            Text.drawParagraph(
-                Viewport.ctx,
-                partialText(this.text, this.t, this.d),
-                textu, textv,
-                115, 50,
-                1,
-                Text.black,
-                Text.black_shadow
-            );
-        }
-    }
-
-    Dialog.details = [
-        {
-            text: 'SHOGGOTH\'S ARMPIT! THE SHOTGUN ARCANA IS SCATTERED ALL OVER THIS DUNGEON!',
-            speech: true
-        },
-        {
-            text: 'HELP ME FIND ALL 404 MISSING PAGES AND GET ME OUT OF HERE!',
-            speech: true
-        },
-        {
-            text: 'USE WASD OR mnop TO MOVE',
-            blockFire: true,
-            blockReload: true
-        },
-        {
-            text: 'USE l TO FIRE YOUR SHOTGUN',
-            blockReload: true
-        },
-        {
-            text: 'USE r TO RELOAD',
-            blockFire: true
-        },
-        {
-            text: 'BE CAREFUL OUT THERE, WE NEED THOSE PAGES BACK!',
-            speech: true
-        },
-        {
-            text: 'STABGUTS! LOOK OUT FOR THE POINTY END.',
-            speech: true
-        },
-        {
-            text: 'SPINDOCTORS! YOU\'LL GET MORE THAN A HAIRCUT FROM THOSE THINGS.',
-            speech: true
-        },
-        {
-            text: 'DON\'T FORGET, PICK UP LOST PAGES TO RECOVER SOME HEALTH!',
-            speech: true
-        }
-    ];
-
-    /**
-     * DialogScheduling
-     */
-    const DialogScheduling = {
-        perform() {
-            if (!game.dialog && !game.brawl && !game.victory) {
-                for (let idx = 0; idx < Dialog.details.length; idx++) {
-                    if (game.dialogPending[idx] && !game.dialogSeen[idx]) {
-                        game.entities.push(new Dialog(idx));
-                        return;
-                    }
-                }
-            }
-        }
-    };
-
-    /**
      * Game state.
      */
     class Game {
@@ -2605,7 +1558,6 @@
                 Audio.init();
                 World.init();
 
-                this.maze = MapLoader.loadMap();
                 this.entities = [];
                 this.dialogPending = {};
                 this.dialogSeen = {};
@@ -2626,12 +1578,17 @@
 
         start() {
             this.frame = 0;
+            this.frameTimes = [];
             this.update();
-            window.requestAnimationFrame(() => this.onFrame(1));
+            window.requestAnimationFrame((delta) => this.onFrame(delta));
         }
 
         onFrame(currentms) {
+            this.frameTimes.unshift(new Date().getTime());
+            this.frameTimes.splice(60);
+            this.fps = 1000 * 60 / (this.frameTimes[0] - this.frameTimes[this.frameTimes.length - 1]);
             this.frame++;
+
             Viewport.resize();
             this.update();
             this.draw(Viewport.ctx);
@@ -2662,13 +1619,13 @@
             }
 
             // perform any queued damage
-            Damage.perform(this.entities);
+            //Damage.perform(this.entities);
 
             // Movement (perform entity velocities to position)
             Movement.perform(this.entities);
 
             // Dialog scheduling
-            DialogScheduling.perform();
+            //DialogScheduling.perform();
 
             // Victory conditions
             Victory.perform();
@@ -2760,7 +1717,7 @@
                 '15' + (' '.repeat(game.frame % 60)) + '@',
                 '16',
                 '17',
-                '18',
+                '18   ' + this.fps,
                 '19',
                 '20',
                 '21',
