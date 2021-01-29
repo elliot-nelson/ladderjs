@@ -1,0 +1,128 @@
+{ "frames": [
+   {
+    "filename": "font.aseprite",
+    "frame": { "x": 128, "y": 0, "w": 128, "h": 448 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 448 },
+    "sourceSize": { "w": 128, "h": 448 },
+    "duration": 100
+   },
+   {
+    "filename": "font2.aseprite",
+    "frame": { "x": 0, "y": 0, "w": 128, "h": 512 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 512 },
+    "sourceSize": { "w": 128, "h": 512 },
+    "duration": 100
+   },
+   {
+    "filename": "harold.aseprite",
+    "frame": { "x": 226, "y": 459, "w": 19, "h": 12 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 19, "h": 12 },
+    "sourceSize": { "w": 19, "h": 12 },
+    "duration": 100
+   },
+   {
+    "filename": "t_tree1.aseprite",
+    "frame": { "x": 166, "y": 448, "w": 30, "h": 19 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 30, "h": 19 },
+    "sourceSize": { "w": 30, "h": 19 },
+    "duration": 100
+   },
+   {
+    "filename": "t_tree2.aseprite",
+    "frame": { "x": 128, "y": 448, "w": 38, "h": 16 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 38, "h": 16 },
+    "sourceSize": { "w": 38, "h": 16 },
+    "duration": 100
+   },
+   {
+    "filename": "t_tree3.aseprite",
+    "frame": { "x": 196, "y": 448, "w": 30, "h": 16 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 30, "h": 16 },
+    "sourceSize": { "w": 30, "h": 16 },
+    "duration": 100
+   },
+   {
+    "filename": "t_tree4.aseprite",
+    "frame": { "x": 226, "y": 448, "w": 27, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 27, "h": 11 },
+    "sourceSize": { "w": 27, "h": 11 },
+    "duration": 100
+   },
+   {
+    "filename": "t_treeplatform1.aseprite",
+    "frame": { "x": 245, "y": 459, "w": 9, "h": 5 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 9, "h": 5 },
+    "sourceSize": { "w": 9, "h": 5 },
+    "duration": 100
+   },
+   {
+    "filename": "tree1.aseprite",
+    "frame": { "x": 166, "y": 448, "w": 30, "h": 19 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 30, "h": 19 },
+    "sourceSize": { "w": 30, "h": 19 },
+    "duration": 100
+   },
+   {
+    "filename": "tree2.aseprite",
+    "frame": { "x": 128, "y": 448, "w": 38, "h": 16 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 38, "h": 16 },
+    "sourceSize": { "w": 38, "h": 16 },
+    "duration": 100
+   },
+   {
+    "filename": "tree3.aseprite",
+    "frame": { "x": 196, "y": 448, "w": 30, "h": 16 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 30, "h": 16 },
+    "sourceSize": { "w": 30, "h": 16 },
+    "duration": 100
+   },
+   {
+    "filename": "tree4.aseprite",
+    "frame": { "x": 226, "y": 448, "w": 27, "h": 11 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 27, "h": 11 },
+    "sourceSize": { "w": 27, "h": 11 },
+    "duration": 100
+   },
+   {
+    "filename": "treeplatform1.aseprite",
+    "frame": { "x": 245, "y": 459, "w": 9, "h": 5 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 9, "h": 5 },
+    "sourceSize": { "w": 9, "h": 5 },
+    "duration": 100
+   }
+ ],
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.18",
+  "image": "spritesheet-gen.png",
+  "format": "RGBA8888",
+  "size": { "w": 256, "h": 512 },
+  "scale": "1"
+ }
+}
