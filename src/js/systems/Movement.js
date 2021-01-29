@@ -1,22 +1,15 @@
 'use strict';
 
 import { game } from '../Game';
-import {
-    tilesHitByCircle,
-    tileIsPassable,
-    qr2xy,
-    intersectCircleCircle,
-    intersectCircleRectangle,
-    normalizeVector,
-    intersectRectangles
-} from '../Util';
-import { Terrain } from '../Terrain';
-import { World } from '../World';
 
 /**
  * Movement
  */
 export const Movement = {
+    perform() {
+    }
+
+    /*
     perform(entities) {
         // Movement only applies to active entities with positions and velocities
         let movers = entities.filter(
@@ -95,7 +88,7 @@ export const Movement = {
             mover.pos.y += mover.vel.y;
 
 
-        }*/
+        }
 
         return;
         // Very basic "rounds" of collision resolution, since we have no real physics.
@@ -216,4 +209,5 @@ export const Movement = {
             }
         }
     }
+    */
 };

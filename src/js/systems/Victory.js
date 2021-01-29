@@ -1,23 +1,12 @@
 'use strict';
 
-import { game } from '../Game';
-import { R360, TILE_SIZE, ROOM_ENDING } from '../Constants';
-import { xy2qr, vectorBetween, vectorAdd, angle2vector, rgba, roomCenter } from '../Util';
-import { Player } from '../Player';
-import { HealthChunkAnimation } from '../HealthChunkAnimation';
-import { ScreenShake } from '../ScreenShake';
-import { Stabguts } from '../Stabguts';
-import { Spindoctor } from '../Spindoctor';
-import { SpawnAnimation } from '../SpawnAnimation';
-import { DEAD } from './Behavior';
-import { Audio } from '../Audio';
 
 /**
  * Victory
  */
 export const Victory = {
     perform() {
-        if (game.player.pages >= 404 && !game.victory) {
+        /*if (game.player.pages >= 404 && !game.victory) {
             Victory.frame = 0;
             game.victory = true;
             game.player.pos = roomCenter(game.maze.rooms[ROOM_ENDING]);
@@ -43,6 +32,6 @@ export const Victory = {
                 game.entities.push(enemy);
                 game.entities.push(new SpawnAnimation(pos));
             }
-        }
+        }*/
     }
 };

@@ -1,19 +1,7 @@
 'use strict';
 
-import { game } from './Game';
-import { R6, R90, DIALOG_HINT_DEATH, DIALOG_HINT_DMG, DIALOG_START_A, DIALOG_START_B, DIALOG_HINT_1, DIALOG_HINT_2, DIALOG_HINT_3 } from './Constants';
-import { vectorBetween, vector2point, normalizeVector, uv2xy, vector2angle, roomCenter } from './Util';
 import { Sprite } from './Sprite';
 import { Input } from './input/Input';
-import { ShotgunBlast } from './ShotgunBlast';
-import { SPAWN, HUNT, ATTACK, RELOAD, DEAD } from './systems/Behavior';
-import { ReloadAnimation } from './ReloadAnimation';
-import { Audio } from './Audio';
-import { Gore } from './Gore';
-import { Viewport } from './Viewport';
-import { SpawnAnimation } from './SpawnAnimation';
-import { Page } from './Page';
-import { ScreenShake } from './ScreenShake';
 
 /**
  * Player

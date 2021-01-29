@@ -1,8 +1,6 @@
 'use strict';
 
 import { Input } from './Input';
-import { R0, R45, R90 } from '../Constants';
-
 
 /**
  * KeyboardAdapter
@@ -25,22 +23,22 @@ export const KeyboardAdapter = {
 
         // For keyboard, we support 8-point movement (S, E, SE, etc.)
         KeyboardAdapter.arrowDirections = [
-            { x:   R0, y:   R0, m: 0 },
-            { x:   R0, y: -R90, m: 1 },
-            { x:   R0, y:  R90, m: 1 },
-            { x:   R0, y:   R0, m: 0 },
-            { x: -R90, y:   R0, m: 1 },
-            { x: -R45, y: -R45, m: 1 },
-            { x: -R45, y:  R45, m: 1 },
-            { x: -R90, y:   R0, m: 1 },
-            { x:  R90, y:   R0, m: 1 },
-            { x:  R45, y: -R45, m: 1 },
-            { x:  R45, y:  R45, m: 1 },
-            { x:  R90, y:   R0, m: 1 },
-            { x:   R0, y:   R0, m: 0 },
-            { x:   R0, y: -R90, m: 1 },
-            { x:   R0, y:  R90, m: 1 },
-            { x:   R0, y:   R0, m: 0 }
+            { x:  0, y:  0, m: 0 },
+            { x:  0, y: -1, m: 1 },
+            { x:  0, y:  1, m: 1 },
+            { x:  0, y:  0, m: 0 },
+            { x: -1, y:  0, m: 1 },
+            { x: -1, y: -1, m: 1 },
+            { x: -1, y:  1, m: 1 },
+            { x: -1, y:  0, m: 1 },
+            { x:  1, y:  0, m: 1 },
+            { x:  1, y: -1, m: 1 },
+            { x:  1, y:  1, m: 1 },
+            { x:  1, y:  0, m: 1 },
+            { x:  0, y:  0, m: 0 },
+            { x:  0, y: -1, m: 1 },
+            { x:  0, y:  1, m: 1 },
+            { x:  0, y:  0, m: 0 }
         ];
 
         KeyboardAdapter.held = [];

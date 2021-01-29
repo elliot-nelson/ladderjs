@@ -2,7 +2,6 @@
 
 import { Sprite } from './Sprite';
 import { Input } from './input/Input';
-import { MapLoader } from './MapLoader';
 import { Text } from './Text';
 import { Player } from './Player';
 import { Viewport } from './Viewport';
@@ -10,12 +9,9 @@ import { TITLE, GAME_WIDTH, GAME_HEIGHT } from './Constants';
 import { rgba, createCanvas, clamp, partialText, uv2xy, xy2qr } from './Util';
 import { Audio } from './Audio';
 import { Movement } from './systems/Movement';
-import { Damage } from './systems/Damage';
-import { DialogScheduling } from './systems/DialogScheduling';
 import { Victory } from './systems/Victory';
 import { Hud } from './Hud';
 import { ScreenShake } from './ScreenShake';
-import { Maze } from './Maze';
 import { World } from './World';
 import { Terrain } from './Terrain';
 
@@ -34,7 +30,6 @@ export class Game {
             Audio.init();
             World.init();
 
-            this.maze = MapLoader.loadMap();
             this.entities = [];
             this.dialogPending = {};
             this.dialogSeen = {};
@@ -96,13 +91,13 @@ export class Game {
         }
 
         // perform any queued damage
-        Damage.perform(this.entities);
+        //Damage.perform(this.entities);
 
         // Movement (perform entity velocities to position)
         Movement.perform(this.entities);
 
         // Dialog scheduling
-        DialogScheduling.perform();
+        //DialogScheduling.perform();
 
         // Victory conditions
         Victory.perform();
@@ -222,7 +217,7 @@ export class Game {
         });
         Viewport.ctx.translate(shakeX, shakeY);
 
-        Maze.draw();
+        //Maze.draw();
 
         for (let entity of this.entities) {
             if (!entity.z || entity.z < 100) entity.draw();

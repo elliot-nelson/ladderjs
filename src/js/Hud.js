@@ -1,15 +1,6 @@
 'use strict';
 
 import { game } from './Game';
-import { HUD_PAGE_U, HUD_PAGE_V, HUD_PAGE_TEXT_U, R90, GROUND, GAME_WIDTH, GAME_HEIGHT } from './Constants';
-import { clamp, vectorBetween, vectorAdd, vector2angle, uv2xy, xy2qr, qr2xy, xy2uv } from './Util';
-import { Input } from './input/Input';
-import { Sprite } from './Sprite';
-import { Text } from './Text';
-import { Viewport } from './Viewport';
-import { ScreenShake } from './ScreenShake';
-import { Victory } from './systems/Victory';
-import { Canvas } from './Canvas';
 
 /**
  * Hud
@@ -18,13 +9,13 @@ import { Canvas } from './Canvas';
  */
 export const Hud = {
     init() {
-        Hud.tooltipCanvas = new Canvas(GAME_WIDTH, GAME_HEIGHT);
+//        Hud.tooltipCanvas = new Canvas(GAME_WIDTH, GAME_HEIGHT);
     },
 
     draw() {
         return;
     },
-
+/*
     drawPageArrow() {
         let page = Hud.closestPage();
         if (page) {
@@ -152,7 +143,7 @@ export const Hud = {
         // random lightning effect!
         //Hud.drawLightning(30, 60, 120, 90);
         Hud.drawLightning(30, 60, uv.u, uv.v);
-        */
+
     },
 
     drawLightning2(x1, y1, x2, y2) {
@@ -268,4 +259,5 @@ export const Hud = {
         Viewport.ctx.fillStyle = '#c0cbdc';
         Viewport.ctx.fillRect(0, Viewport.height - height - 3, Viewport.width, 1);
     }
+    */
 };
