@@ -2,19 +2,19 @@
 
 import { Sprite } from './Sprite';
 import { rgba, createCanvas } from './Util';
+import { CHAR_WIDTH, CHAR_HEIGHT, CHARSHEET_WIDTH } from './Constants';
 
-const C_WIDTH = 8;
-const C_HEIGHT = 16;
-const FONT_SHEET_WIDTH = 16 * C_WIDTH;
-const FONT_SHEET_HEIGHT = 32 * C_HEIGHT;
-
+// In our character sheet, chars 0x00-0x7F are standard ASCII, below that we put whatever
+// characters are convenient for us. Here we can choose to map unicode characters to positions
+// 0x80+ in the charsheet, making it easy for us to render things like special characters,
+// box drawing characters, etc.
 const SUPPORTED_UNICODE_CHARS = [
     '─│┌┐└┘├┤┬┴┼╳╳╳╳╳',
     '═║╔╗╚╝╠╣╦╩╬╳╳╳╳╳'
 ].join('');
 
 const UNICODE_CHAR_MAP = SUPPORTED_UNICODE_CHARS.split('').reduce((map, char, idx) => {
-    map[char] = 128 + idx;
+    map[char] = 0x80 + idx;
     return map;
 }, {});
 
@@ -55,32 +55,32 @@ export const Text = {
 
         for (let idx = 0; idx < text.length; idx++) {
             let c = UNICODE_CHAR_MAP[text[idx]] || text.charCodeAt(idx);
-            let k = (c - 0) * (C_WIDTH);
+            let k = (c - 0) * (CHAR_WIDTH);
             if (shadow) {
                 ctx.drawImage(
                     shadow,
-                    k % FONT_SHEET_WIDTH,
-                    (k / FONT_SHEET_WIDTH | 0) * C_HEIGHT,
-                    C_WIDTH,
-                    C_HEIGHT,
+                    k % CHARSHEET_WIDTH,
+                    Math.floor(k / CHARSHEET_WIDTH) * CHAR_HEIGHT,
+                    CHAR_WIDTH,
+                    CHAR_HEIGHT,
                     u + 1,
                     v,
-                    C_WIDTH * scale,
-                    C_HEIGHT * scale
+                    CHAR_WIDTH * scale,
+                    CHAR_HEIGHT * scale
                 );
             }
             ctx.drawImage(
                 font,
-                k % FONT_SHEET_WIDTH,
-                (k / FONT_SHEET_WIDTH | 0) * C_HEIGHT,
-                C_WIDTH,
-                C_HEIGHT,
+                k % CHARSHEET_WIDTH,
+                Math.floor(k / CHARSHEET_WIDTH) * CHAR_HEIGHT,
+                CHAR_WIDTH,
+                CHAR_HEIGHT,
                 u,
                 v,
-                C_WIDTH * scale,
-                C_HEIGHT * scale
+                CHAR_WIDTH * scale,
+                CHAR_HEIGHT * scale
             );
-            u += C_WIDTH * scale;
+            u += CHAR_WIDTH * scale;
         }
     },
 
@@ -92,7 +92,7 @@ export const Text = {
     */
 
     measureWidth(text, scale = 1) {
-        return text.split('').reduce((sum, c) => sum + C_WIDTH, 0) * scale;
+        return text.split('').reduce((sum, c) => sum + CHAR_WIDTH, 0) * scale;
     },
 
     splitParagraph(text, w, h) {
@@ -114,7 +114,7 @@ export const Text = {
                 }
                 if (wip.text.length > 0) list.push(wip);
                 cu = 0;
-                cv += (C_HEIGHT);
+                cv += (CHAR_HEIGHT);
                 wip = next();
                 if (saved.length > 0) {
                     wip.text = saved;
@@ -133,13 +133,12 @@ export const Text = {
         return list.map(line => ({
             ...line,
             w: Text.measureWidth(line.text, 1),
-            h: C_HEIGHT
+            h: CHAR_HEIGHT
         }));
     }
 };
 
 // Text utility functions
-
 
 function recolor(font, color) {
     let canvas = createCanvas(font.width, font.height);

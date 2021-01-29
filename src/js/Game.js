@@ -55,12 +55,17 @@ export class Game {
 
     start() {
         this.frame = 0;
+        this.frameTimes = [];
         this.update();
-        window.requestAnimationFrame(() => this.onFrame(1));
+        window.requestAnimationFrame((delta) => this.onFrame(delta));
     }
 
     onFrame(currentms) {
+        this.frameTimes.unshift(new Date().getTime());
+        this.frameTimes.splice(60);
+        this.fps = 1000 * 60 / (this.frameTimes[0] - this.frameTimes[this.frameTimes.length - 1]);
         this.frame++;
+
         Viewport.resize();
         this.update();
         this.draw(Viewport.ctx);
@@ -189,7 +194,7 @@ export class Game {
             '15' + (' '.repeat(game.frame % 60)) + '@',
             '16',
             '17',
-            '18',
+            '18   ' + this.fps,
             '19',
             '20',
             '21',
