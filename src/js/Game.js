@@ -108,7 +108,9 @@ export class Game {
         // Victory conditions
         Victory.perform();
 
-        this.field.update();
+        if (this.field) {
+            this.field.update();
+        }
 
         // Culling (typically when an entity dies)
         this.entities = this.entities.filter(entity => !entity.cull);
@@ -215,7 +217,9 @@ export class Game {
 
         //Text.drawText(Viewport.ctx, Text.splitParagraph(screen, Viewport.width), 0, 0, 1, Text.terminal, Text.terminal_shadow);
 
-        this.field.draw();
+        if (this.field) {
+            this.field.draw();
+        }
 
         return;
 
@@ -375,6 +379,14 @@ export class Game {
         } else {
             this.gridHovered = undefined;
         }
+    }
+
+    async nextLevel() {
+        this.field = undefined;
+
+        let nextField = new Field('EasyStreet');
+        await nextField.init();
+        this.field = nextField;
     }
 }
 

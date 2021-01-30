@@ -1,4 +1,7 @@
 import { Text } from './Text';
+import { Player } from './Player';
+import { LEVEL_COLS, LEVEL_ROWS } from './Constants';
+import { game } from './Game';
 
 /**
  * Field
@@ -18,17 +21,24 @@ export class Field {
         this.terrain = level.terrain;
         this.dispensers = level.dispensers;
         this.eaters = level.eaters;
-        this.treasures = level.treasures;
-        this.statues = level.statues;
-        this.player = level.player;
+        this.player = new Player(level.player.x, level.player.y);
 
         this.score = 0;
     }
 
     update() {
-        console.log(this.player);
-        if (this.player.x < 79) {
-            this.player.x++;
+        // Move player based on user input
+        this.player.update(this);
+
+        // Collect statues
+        if (this.isStatue(this.player.x, this.player.y)) {
+            this.terrain[this.player.y][this.player.x] = ' ';
+            this.score += 1000;
+        }
+
+        // Collect treasure (ends the current level)
+        if (this.isTreasure(this.player.x, this.player.y)) {
+            game.nextLevel();
         }
     }
 
@@ -37,16 +47,42 @@ export class Field {
         let screen = this.terrain.map(row => row.join('')).join('\n');
         Text.drawTextColRow(screen, 0, 0);
 
-        // Draw entities
-        for (let treasure of this.treasures) {
-            Text.drawTextColRow('$', treasure.x, treasure.y);
-        }
+        this.player.draw();
 
-        for (let statue of this.statues) {
-            Text.drawTextColRow('&', statue.x, statue.y);
-        }
+        // Score
+        Text.drawTextColRow(String(this.score) + '    ', 0, 21);
+    }
 
-        Text.drawTextColRow('p', this.player.x, this.player.y);
+    onSolid(x, y) {
+        return ['=', '-', 'H', '|'].includes(this.terrain[y + 1][x]) || this.terrain[y][x] === 'H';
+    }
+
+    emptySpace(x, y) {
+        if (x < 0 || x > LEVEL_COLS) {
+            return true;
+        } else {
+            return !(this.terrain[y][x] in ['|', '=']);
+        }
+    }
+
+    isLadder(x, y) {
+        return this.terrain[y][x] === 'H';
+    }
+
+    isStatue(x, y) {
+        return this.terrain[y][x] === '&';
+    }
+
+    isTreasure(x, y) {
+        return this.terrain[y][x] === '$';
+    }
+
+    canClimbUp(x, y) {
+        return ['H', '&', '$'].includes(this.terrain[y][x]);
+    }
+
+    canClimbDown(x, y) {
+        return ['H', '&', '$', ' ', '^', '.'].includes(this.terrain[y][x]);
     }
 
     static async loadLevel(levelName) {
@@ -55,19 +91,17 @@ export class Field {
         let terrain = text.split('\n').map(row => row.split(''));
         let dispensers = [];
         let eaters = [];
-        let treasures = [];
-        let statues = [];
         let player;
 
         // Sanity check
-        terrain = terrain.slice(0, 20);
+        terrain = terrain.slice(0, LEVEL_ROWS);
 
-        for (let y = 0; y < 20; y++) {
+        for (let y = 0; y < LEVEL_ROWS; y++) {
             // Sanity checks
             if (!terrain[y]) terrain[y] = [];
-            terrain[y] = terrain[y].slice(0, 80);
+            terrain[y] = terrain[y].slice(0, LEVEL_COLS);
 
-            for (let x = 0; x < 80; x++) {
+            for (let x = 0; x < LEVEL_COLS; x++) {
                 // Sanity check
                 if (!terrain[y][x]) terrain[y][x] = ' ';
 
@@ -85,18 +119,8 @@ export class Field {
 
                 // Treasure ($), Statues (&), and the Lad (p) are transient - the player moves around and
                 // can pick up the treasures and statues. That's why for these elements, we add them to
-                // our list AND we remove them from the "playing field", we'll draw them separately on
+                // our lists AND we remove them from the "playing field", we'll draw them separately on
                 // top of the terrain.
-
-                if (terrain[y][x] === '$') {
-                    terrain[y][x] = ' ';
-                    treasures.push({ x, y });
-                }
-
-                if (terrain[y][x] === '&') {
-                    terrain[y][x] = ' ';
-                    statues.push({ x, y });
-                }
 
                 if (terrain[y][x] === 'p') {
                     terrain[y][x] = ' ';
@@ -112,8 +136,6 @@ export class Field {
             terrain,
             dispensers,
             eaters,
-            treasures,
-            statues,
             player
         };
     }

@@ -19,3 +19,9 @@ export const CHAR_WIDTH = 8;
 export const CHAR_HEIGHT = 16;
 export const CHARSHEET_WIDTH = 16 * CHAR_WIDTH;
 export const CHARSHEET_HEIGHT = 32 * CHAR_HEIGHT;
+
+// Game constants, copied from the original game
+export const LEVEL_ROWS = 20;
+export const LEVEL_COLS = 79;
+export const MAX_DISPENSERS = 3;
+export const JUMP_FRAMES = 6;

@@ -29,10 +29,11 @@ export const Input = {
     // inputs.
     //
     Action: {
-        UP: 11,
-        DOWN: 12,
-        LEFT: 13,
-        RIGHT: 14,
+        UP:     31,
+        DOWN:   32,
+        LEFT:   33,
+        RIGHT:  34,
+        JUMP:   35,
         ATTACK: 21,
         RELOAD: 30,
         MENU: 96,

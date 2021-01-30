@@ -18,6 +18,7 @@ export const KeyboardAdapter = {
             ArrowLeft:   Input.Action.LEFT,
             ArrowDown:   Input.Action.DOWN,
             ArrowRight:  Input.Action.RIGHT,
+            Space:       Input.Action.JUMP,
             Escape:      Input.Action.MENU
         };
 
@@ -47,6 +48,7 @@ export const KeyboardAdapter = {
             let k = KeyboardAdapter.map[event.code];
             // Debugging - key presses
             // console.log(event.key, event.keyCode, event.code, k);
+            console.log(event.code);
             if (k) {
                 KeyboardAdapter.held[k] = true;
             }

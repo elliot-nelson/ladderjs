@@ -17,6 +17,10 @@
     const CHAR_HEIGHT = 16;
     const CHARSHEET_WIDTH = 16 * CHAR_WIDTH;
 
+    // Game constants, copied from the original game
+    const LEVEL_ROWS = 20;
+    const LEVEL_COLS = 79;
+
     /**
      * Viewport
      *
@@ -330,6 +334,7 @@
                 ArrowLeft:   Input.Action.LEFT,
                 ArrowDown:   Input.Action.DOWN,
                 ArrowRight:  Input.Action.RIGHT,
+                Space:       Input.Action.JUMP,
                 Escape:      Input.Action.MENU
             };
 
@@ -359,6 +364,7 @@
                 let k = KeyboardAdapter.map[event.code];
                 // Debugging - key presses
                 // console.log(event.key, event.keyCode, event.code, k);
+                console.log(event.code);
                 if (k) {
                     KeyboardAdapter.held[k] = true;
                 }
@@ -712,10 +718,11 @@
         // inputs.
         //
         Action: {
-            UP: 11,
-            DOWN: 12,
-            LEFT: 13,
-            RIGHT: 14,
+            UP:     31,
+            DOWN:   32,
+            LEFT:   33,
+            RIGHT:  34,
+            JUMP:   35,
             ATTACK: 21,
             RELOAD: 30,
             MENU: 96,
@@ -931,41 +938,368 @@
         return canvas.canvas;
     }
 
+    // This is our list of STATES. Each entity starts out in one of these states and can move between
+    // them based on events that happen in the game. (Note that some of these are directions, but
+    // since an entity keeps moving in the direction it is going unless stopped, directions are
+    // states in this game.)
+    const State = {
+        PENDING:    0,
+        STOPPED:    1,
+        UP:         2,
+        LEFT:       3,
+        DOWN:       4,
+        RIGHT:      5,
+        FALLING:    6,
+        START_JUMP: 7,
+        JUMP_LEFT:  8,
+        JUMP_RIGHT: 9,
+        JUMP_UP:    10
+    };
+
+    const JUMP_FRAMES = {
+        [State.JUMP_RIGHT]: [
+            { x: 1, y: -1 },
+            { x: 1, y: -1 },
+            { x: 1, y: 0 },
+            { x: 1, y: 0 },
+            { x: 1, y: 1 },
+            { x: 1, y: 1 }
+        ],
+        [State.JUMP_LEFT]: [
+            { x: -1, y: -1 },
+            { x: -1, y: -1 },
+            { x: -1, y: 0 },
+            { x: -1, y: 0 },
+            { x: -1, y: 1 },
+            { x: -1, y: 1 }
+        ],
+        [State.JUMP_UP]: [
+            { x: 0, y: -1 },
+            { x: 0, y: -1 },
+            { x: 0, y: 0 },
+            { x: 0, y: 1 },
+            { x: 0, y: 1 },
+            { x: 0, y: 0 }
+        ],
+    };
+
     /**
      * Player
      */
     class Player {
-        constructor() {
-            this.pos = { x: 0, y: 0 };
-            this.vel = { x: 0, y: 0 };
-            this.bbox = [{ x: -6, y: -6 }, { x: 6, y: 6 }];
-            this.hp = 100;
-            this.damage = [];
-            this.history = [];
-            this.facing = { x: 0, y: -1, m: 0 };
-            this.radius = 11;
-            this.shellsLeft = 4;
-            this.shellsMax = 4;
-            this.forcedReload = false;
-            this.mass = 3;
-            this.pages = 0;
-            this.deaths = 0;
-            this.state = 1;
-            this.frames = 29;
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.state = State.STOPPED;
+            this.nextState = State.STOPPED;
+            this.jumpStep = 0;
         }
 
-        think() {
-            this.vel = {
-                x: Input.direction.x * Input.direction.m * 0.7,
-                y: Input.direction.y * Input.direction.m * 0.7
-            };
+        update(field) {
+            let repeat = false;
+
+            if (Input.pressed[Input.Action.LEFT]) {
+                this.nextState = State.LEFT;
+            }
+
+            if (Input.pressed[Input.Action.RIGHT]) {
+                this.nextState = State.RIGHT;
+            }
+
+            if (Input.pressed[Input.Action.UP]) {
+                this.nextState = State.UP;
+            }
+
+            if (Input.pressed[Input.Action.DOWN]) {
+                this.nextState = State.DOWN;
+            }
+
+            if (Input.pressed[Input.Action.JUMP]) {
+                this.nextState = State.START_JUMP;
+            }
+
+            // If we are stopped or moving left or right, and we are asked to do something,
+            // then try to do it.
+            if (this.nextState) {
+                switch (this.state) {
+                    case State.STOPPED:
+                    case State.LEFT:
+                    case State.RIGHT:
+                        if ([State.LEFT, State.RIGHT, State.STOPPED].includes(this.nextState)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        }
+                        break;
+
+                    case State.UP:
+                    case State.DOWN:
+                        // Normal
+                        if ([State.LEFT, State.RIGHT].includes(this.nextState)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        }
+                        break;
+                }
+            }
+
+            if (this.nextState === State.START_JUMP) {
+                // Special case: the user wants to jump!
+                //
+                // If the player is standing on something solid, we initiate a jump based on the current
+                // movement of the player. If not, we (sort of) ignore the request to jump... although
+                // it does subtly change the behavior upon landing.
+                if (field.onSolid(this.x, this.y)) {
+                    if (this.state === State.STOPPED || this.state === State.FALLING) {
+                        this.state = State.JUMP_UP;
+                        this.jumpStep = 0;
+                        this.nextState = State.STOPPED;
+                    } else if (this.state === State.LEFT || this.state === State.JUMP_LEFT) {
+                        this.state = State.JUMP_LEFT;
+                        this.jumpStep = 0;
+                        this.nextState = State.LEFT;
+                    } else if (this.state === State.RIGHT || this.state === State.JUMP_RIGHT) {
+                        this.state = State.JUMP_RIGHT;
+                        this.jumpStep = 0;
+                        this.nextState = State.RIGHT;
+                    }
+                } else {
+                    if (this.state === State.JUMP_UP || this.state === State.FALLING) {
+                        this.nextState = State.STOPPED;
+                    } else if (this.state === State.JUMP_RIGHT) {
+                        this.nextState = State.RIGHT;
+                    } else if (this.state === State.JUMP_LEFT) {
+                        this.nextState = State.LEFT;
+                    }
+                }
+            } else if (this.nextState === State.UP && field.isLadder(this.x, this.y)) {
+                // Special case: the user wants to go up!
+                //
+                // If the user is on a ladder, we can start ascending. Note that if the user is not
+                // on a ladder we ignore their input, which is intentional -- this allows queued
+                // (pacman) input, where we can tap UP a little before reaching the ladder.
+                this.state = State.UP;
+                this.nextState = undefined;
+            } else if (this.nextState === State.DOWN && (field.isLadder(this.x, this.y) || field.isLadder(this.x, this.y + 1))) {
+                // Special case: the player wants to go down!
+                //
+                // If the player is on (or above) a ladder, we can start descending. Note that if the player is not
+                // on a ladder we ignore their input, which is intentional -- this allows queued
+                // (pacman) input, where we can tap DOWN a little before reaching the ladder.
+                this.state = State.DOWN;
+                this.nextState = undefined;
+            }
+
+            switch (this.state) {
+                case State.LEFT:
+                    if (!field.onSolid(this.x, this.y)) {
+                        this.nextState = State.LEFT;
+                        this.state = State.FALLING;
+                        repeat = true;
+                        break;
+                    }
+                    if (field.emptySpace(this.x - 1, this.y)) {
+                        console.log('x--');
+                        this.x--;
+                    } else {
+                        console.log('stop');
+                        this.nextState = State.STOPPED;
+                    }
+                    break;
+
+                case State.RIGHT:
+                    if (!field.onSolid(this.x, this.y)) {
+                        this.nextState = State.RIGHT;
+                        this.state = State.FALLING;
+                        repeat = true;
+                        break;
+                    }
+                    if (field.emptySpace(this.x + 1, this.y)) {
+                        console.log('x+-');
+                        this.x++;
+                    } else {
+                        console.log('stop');
+                        this.nextState = State.STOPPED;
+                    }
+                    break;
+
+                case State.UP:
+                    if (field.canClimbUp(this.x, this.y - 1)) {
+                        this.y--;
+                    } else {
+                        this.state = State.STOPPED;
+                    }
+                    break;
+
+                case State.DOWN:
+                    if (field.canClimbDown(this.x, this.y + 1)) {
+                        this.y++;
+                    } else {
+                        this.state = State.STOPPED;
+                    }
+                    break;
+
+                case State.JUMP_RIGHT:
+                case State.JUMP_LEFT:
+                case State.JUMP_UP:
+                    let step = JUMP_FRAMES[this.state][this.jumpStep];
+                    console.log(this.state, this.jumpStep, JUMP_FRAMES[this.state].length);
+                    if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
+                        let terrain = field.terrain[this.y + step.y][this.x + step.x];
+                        if (['=', '|', '-'].includes(terrain)) {
+                            if (field.onSolid(this.x, this.y)) {
+                                console.log('a');
+                                this.state = this.nextState;
+                                this.nextState = undefined;
+                            } else {
+                                console.log('b');
+                                switch (this.state) {
+                                    case State.JUMP_RIGHT:
+                                        this.nextState = State.RIGHT;
+                                        break;
+                                    case State.JUMP_LEFT:
+                                        this.nextState = State.LEFT;
+                                        break;
+                                    case State.JUMP_UP:
+                                        this.nextState = State.UP;
+                                        break;
+                                }
+                                this.state = State.FALLING;
+                            }
+                        } else if (terrain === 'H') {
+                                console.log('c');
+                            this.x += step.x;
+                            this.y += step.y;
+                            this.state = State.STOPPED;
+                            this.nextState = undefined;
+                        } else {
+                                console.log('d');
+                            this.x += step.x;
+                            this.y += step.y;
+                            this.jumpStep++;
+
+                            if (this.jumpStep >= JUMP_FRAMES[this.state].length) {
+                                this.state = this.nextState;
+                                this.nextState = undefined;
+                            }
+                        }
+                    } else {
+                                console.log('e');
+                        if (field.onSolid(this.x, this.y)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        } else {
+                            this.state = State.FALLING;
+                            this.nextState = State.STOPPED;
+                        }
+                    }
+                    break;
+
+                case State.FALLING:
+                    if (field.onSolid(this.x, this.y)) {
+                        this.state = this.nextState || State.STOPPED;
+                    } else {
+                        this.y++;
+                    }
+                    break;
+            }
+
+            /*
+            { If stopped or going left or going right and     }
+            { request to do something else, then try to do it }
+            IF (a.DirRequest <> NONE) THEN BEGIN
+              CASE a.Dir OF
+                STOPPED, PENDING:
+                  IF a.DirRequest IN [LEFT, RIGHT, UP, DOWN, FALLING] THEN
+                    UpdateDir(a);
+
+                JUMPUP:
+                  IF a.DirRequest = LEFT THEN
+                    a.Dir := JUMPLEFT
+                  ELSE IF a.DirRequest = RIGHT THEN
+                    a.Dir := JUMPRIGHT;
+
+                RIGHT:
+                  IF a.DirRequest IN [LEFT, STOPPED] THEN
+                    UpdateDir(a);
+
+                LEFT:
+                  IF a.DirRequest IN [RIGHT, STOPPED] THEN
+                    UpdateDir(a);
+
+                UP, DOWN:
+                  IF a.DirRequest IN [STOPPED, UP, DOWN, RIGHT, LEFT] THEN
+                    UpdateDir(a);
+
+                JUMPUP:
+                  IF a.DirRequest = LEFT THEN
+                    a.Dir := JUMPLEFT
+                  ELSE
+                    a.Dir := JUMPRIGHT;
+
+                JUMPRIGHT, JUMPLEFT:
+                  IF a.DirRequest = STOPPED THEN
+                    UpdateDir(a);
+
+                PENDING:
+                  UpdateDir(a);
+
+              END;
+            END;
+
+
+            if (this.nextState) {
+                if (field.onSolid(this) && this.nextState
+
+            if (field.onSolid(this)) {
+                if (this.nextState) {
+                    if (this.nextState === State.JUMP_START) {
+                        if (this.state ===
+                    this.state = this.nextState;
+                    this.nextState = undefined;
+
+                    if (this.state === State.JUMP_START) {
+
+                    }
+                }
+
+            }
+
+            if (this.state === State.JUMPING) {
+                let dir = this.jumpFrames.shift();
+                this.x += dir.x;
+                this.y += dir.y;
+
+                if (this.jumpFrames.length === 0) {
+                    this.state = this.nextState;
+                }
+            }
+            */
+
+            if (repeat) return this.update(field);
         }
 
         draw() {
-            let sprite = Sprite.harold[0];
-            //let p = { x: Math.round(this.pos.x), y: Math.round(this.pos.y) };
-            let p = this.pos;
-            Sprite.drawViewportSprite(sprite, p);
+            let char = 'g';
+
+            switch (this.state) {
+                case State.RIGHT:
+                case State.JUMP_RIGHT:
+                case State.UP:
+                case State.DOWN:
+                    char = 'p';
+                    break;
+
+                case State.LEFT:
+                case State.JUMP_LEFT:
+                    char = 'q';
+                    break;
+
+                case State.FALLING:
+                    char = 'b';
+                    break;
+            }
+
+            Text.drawTextColRow(char, this.x, this.y);
         }
     }
 
@@ -1565,17 +1899,24 @@
             this.terrain = level.terrain;
             this.dispensers = level.dispensers;
             this.eaters = level.eaters;
-            this.treasures = level.treasures;
-            this.statues = level.statues;
-            this.player = level.player;
+            this.player = new Player(level.player.x, level.player.y);
 
             this.score = 0;
         }
 
         update() {
-            console.log(this.player);
-            if (this.player.x < 79) {
-                this.player.x++;
+            // Move player based on user input
+            this.player.update(this);
+
+            // Collect statues
+            if (this.isStatue(this.player.x, this.player.y)) {
+                this.terrain[this.player.y][this.player.x] = ' ';
+                this.score += 1000;
+            }
+
+            // Collect treasure (ends the current level)
+            if (this.isTreasure(this.player.x, this.player.y)) {
+                game.nextLevel();
             }
         }
 
@@ -1584,16 +1925,42 @@
             let screen = this.terrain.map(row => row.join('')).join('\n');
             Text.drawTextColRow(screen, 0, 0);
 
-            // Draw entities
-            for (let treasure of this.treasures) {
-                Text.drawTextColRow('$', treasure.x, treasure.y);
-            }
+            this.player.draw();
 
-            for (let statue of this.statues) {
-                Text.drawTextColRow('&', statue.x, statue.y);
-            }
+            // Score
+            Text.drawTextColRow(String(this.score) + '    ', 0, 21);
+        }
 
-            Text.drawTextColRow('p', this.player.x, this.player.y);
+        onSolid(x, y) {
+            return ['=', '-', 'H', '|'].includes(this.terrain[y + 1][x]) || this.terrain[y][x] === 'H';
+        }
+
+        emptySpace(x, y) {
+            if (x < 0 || x > LEVEL_COLS) {
+                return true;
+            } else {
+                return !(this.terrain[y][x] in ['|', '=']);
+            }
+        }
+
+        isLadder(x, y) {
+            return this.terrain[y][x] === 'H';
+        }
+
+        isStatue(x, y) {
+            return this.terrain[y][x] === '&';
+        }
+
+        isTreasure(x, y) {
+            return this.terrain[y][x] === '$';
+        }
+
+        canClimbUp(x, y) {
+            return ['H', '&', '$'].includes(this.terrain[y][x]);
+        }
+
+        canClimbDown(x, y) {
+            return ['H', '&', '$', ' ', '^', '.'].includes(this.terrain[y][x]);
         }
 
         static async loadLevel(levelName) {
@@ -1602,19 +1969,17 @@
             let terrain = text.split('\n').map(row => row.split(''));
             let dispensers = [];
             let eaters = [];
-            let treasures = [];
-            let statues = [];
             let player;
 
             // Sanity check
-            terrain = terrain.slice(0, 20);
+            terrain = terrain.slice(0, LEVEL_ROWS);
 
-            for (let y = 0; y < 20; y++) {
+            for (let y = 0; y < LEVEL_ROWS; y++) {
                 // Sanity checks
                 if (!terrain[y]) terrain[y] = [];
-                terrain[y] = terrain[y].slice(0, 80);
+                terrain[y] = terrain[y].slice(0, LEVEL_COLS);
 
-                for (let x = 0; x < 80; x++) {
+                for (let x = 0; x < LEVEL_COLS; x++) {
                     // Sanity check
                     if (!terrain[y][x]) terrain[y][x] = ' ';
 
@@ -1632,18 +1997,8 @@
 
                     // Treasure ($), Statues (&), and the Lad (p) are transient - the player moves around and
                     // can pick up the treasures and statues. That's why for these elements, we add them to
-                    // our list AND we remove them from the "playing field", we'll draw them separately on
+                    // our lists AND we remove them from the "playing field", we'll draw them separately on
                     // top of the terrain.
-
-                    if (terrain[y][x] === '$') {
-                        terrain[y][x] = ' ';
-                        treasures.push({ x, y });
-                    }
-
-                    if (terrain[y][x] === '&') {
-                        terrain[y][x] = ' ';
-                        statues.push({ x, y });
-                    }
 
                     if (terrain[y][x] === 'p') {
                         terrain[y][x] = ' ';
@@ -1659,8 +2014,6 @@
                 terrain,
                 dispensers,
                 eaters,
-                treasures,
-                statues,
                 player
             };
         }
@@ -1758,7 +2111,9 @@
             // Victory conditions
             Victory.perform();
 
-            this.field.update();
+            if (this.field) {
+                this.field.update();
+            }
 
             // Culling (typically when an entity dies)
             this.entities = this.entities.filter(entity => !entity.cull);
@@ -1865,7 +2220,9 @@
 
             //Text.drawText(Viewport.ctx, Text.splitParagraph(screen, Viewport.width), 0, 0, 1, Text.terminal, Text.terminal_shadow);
 
-            this.field.draw();
+            if (this.field) {
+                this.field.draw();
+            }
 
             return;
 
@@ -1947,6 +2304,14 @@
             } else {
                 this.gridHovered = undefined;
             }
+        }
+
+        async nextLevel() {
+            this.field = undefined;
+
+            let nextField = new Field('EasyStreet');
+            await nextField.init();
+            this.field = nextField;
         }
     }
 
