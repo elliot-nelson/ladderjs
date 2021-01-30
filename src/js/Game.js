@@ -14,16 +14,17 @@ import { Hud } from './Hud';
 import { ScreenShake } from './ScreenShake';
 import { World } from './World';
 import { Terrain } from './Terrain';
+import { Field } from './Field';
 
 /**
  * Game state.
  */
 export class Game {
     init() {
-        Sprite.loadSpritesheet(() => {
-            Viewport.init();
-            Sprite.init();
-            Terrain.init();
+        Sprite.loadSpritesheet(async () => {
+            await Viewport.init();
+            await Sprite.init();
+            await Terrain.init();
             Text.init();
             Hud.init();
             Input.init();
@@ -41,6 +42,9 @@ export class Game {
             this.camera = { pos: { x: 0, y: 0 } };
             this.cameraFocus = { pos: { x: 0, y: 0 } };
 
+            this.field = new Field('EasyStreet');
+            await this.field.init();
+
             window.addEventListener('blur', () => this.pause());
             window.addEventListener('focus', () => this.unpause());
 
@@ -49,22 +53,24 @@ export class Game {
     }
 
     start() {
+        this.fps = 30;
         this.frame = 0;
         this.frameTimes = [];
         this.update();
         window.requestAnimationFrame((delta) => this.onFrame(delta));
     }
 
-    onFrame(currentms) {
-        this.frameTimes.unshift(new Date().getTime());
-        this.frameTimes.splice(60);
-        this.fps = 1000 * 60 / (this.frameTimes[0] - this.frameTimes[this.frameTimes.length - 1]);
-        this.frame++;
-
+    onFrame() {
         Viewport.resize();
-        this.update();
+
+        let now = new Date().getTime(), lastFrame = this.lastFrame || 0;
+        if (now - lastFrame >= 1000 / this.fps) {
+            this.update();
+            this.lastFrame = now;
+        }
+
         this.draw(Viewport.ctx);
-        window.requestAnimationFrame(() => this.onFrame(currentms));
+        window.requestAnimationFrame(() => this.onFrame());
     }
 
     update() {
@@ -101,6 +107,8 @@ export class Game {
 
         // Victory conditions
         Victory.perform();
+
+        this.field.update();
 
         // Culling (typically when an entity dies)
         this.entities = this.entities.filter(entity => !entity.cull);
@@ -205,7 +213,9 @@ export class Game {
             '═║╔╗╚╝╠╣╦╩╬'
         ].join('\n');*/
 
-        Text.drawText(Viewport.ctx, Text.splitParagraph(screen, Viewport.width), 0, 0, 1, Text.terminal, Text.terminal_shadow);
+        //Text.drawText(Viewport.ctx, Text.splitParagraph(screen, Viewport.width), 0, 0, 1, Text.terminal, Text.terminal_shadow);
+
+        this.field.draw();
 
         return;
 

@@ -3,6 +3,8 @@
 import { Sprite } from './Sprite';
 import { rgba, createCanvas } from './Util';
 import { CHAR_WIDTH, CHAR_HEIGHT, CHARSHEET_WIDTH } from './Constants';
+import { Viewport } from './Viewport';
+
 
 // In our character sheet, chars 0x00-0x7F are standard ASCII, below that we put whatever
 // characters are convenient for us. Here we can choose to map unicode characters to positions
@@ -135,6 +137,10 @@ export const Text = {
             w: Text.measureWidth(line.text, 1),
             h: CHAR_HEIGHT
         }));
+    },
+
+    drawTextColRow(text, col, row) {
+        Text.drawText(Viewport.ctx, Text.splitParagraph(text, Viewport.width), col * CHAR_WIDTH, row * CHAR_HEIGHT, 1, Text.terminal, Text.terminal_shadow);
     }
 };
 

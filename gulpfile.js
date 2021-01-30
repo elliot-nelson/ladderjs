@@ -202,6 +202,11 @@ function copyFinalSprites() {
         .pipe(gulp.dest('dist/final'));
 }
 
+function copyLevels() {
+    return gulp.src('src/levels/*.txt')
+        .pipe(gulp.dest('dist/build/levels'));
+}
+
 const buildAssets = gulp.series(
     exportTerrainSprites,
     exportSpriteSheet,
@@ -209,7 +214,8 @@ const buildAssets = gulp.series(
     //pngoutAssets,
     generateSpriteSheetData,
     //generateMapData,
-    copyFinalSprites
+    copyFinalSprites,
+    copyLevels
 );
 
 // -----------------------------------------------------------------------------
@@ -275,6 +281,11 @@ const build = gulp.series(
 // -----------------------------------------------------------------------------
 function watch() {
     watching = true;
+
+    let server = require('http-server').createServer({ root: 'dist/build' });
+    server.listen(8080, '0.0.0.0', () => {
+        console.log(1);
+    });
 
     // The watch task watches for any file changes in the src/ folder, _except_ for
     // edits to generated files (called blah-gen by convention).
