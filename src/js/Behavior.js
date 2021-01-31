@@ -4,17 +4,18 @@
 // since an entity keeps moving in the direction it is going unless stopped, directions are
 // states in this game.)
 export const State = {
-    PENDING:    0,
-    STOPPED:    1,
-    UP:         2,
-    LEFT:       3,
-    DOWN:       4,
-    RIGHT:      5,
-    FALLING:    6,
-    START_JUMP: 7,
-    JUMP_LEFT:  8,
-    JUMP_RIGHT: 9,
-    JUMP_UP:    10
+    STOPPED:    1,         // Standing still
+    UP:         2,         // Moving up (player only)
+    LEFT:       3,         // Moving left
+    DOWN:       4,         // Moving down
+    RIGHT:      5,         // Moving right
+    FALLING:    6,         // Falling
+    START_JUMP: 7,         // About to start a jump (player only)
+    JUMP_LEFT:  8,         // Jumping left (player only)
+    JUMP_RIGHT: 9,         // Jumping right (player only)
+    JUMP_UP:    10,        // Jumping straight up (player only)
+    DYING:      11,        // Dying (used as a death animation)
+    DEAD:       12         // Dead (for player, restart level; for rock, disappear)
 };
 
 export const JUMP_FRAMES = {

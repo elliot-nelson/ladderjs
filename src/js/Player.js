@@ -7,6 +7,8 @@ import { Text } from './Text';
 import { LEVEL_ROWS, LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
 
+const DEATH_FRAMES = ['p', 'b', 'd', 'q', 'p', 'b', 'd', 'q', '-', '-', '_'];
+
 /**
  * Player
  */
@@ -18,9 +20,17 @@ export class Player extends Entity {
         this.state = State.STOPPED;
         this.nextState = State.STOPPED;
         this.jumpStep = 0;
+        this.deathStep = 0;
     }
 
     update(field) {
+        if (this.state === State.DYING) {
+            this.deathStep++;
+            if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
+        }
+
+        if (this.state === State.DYING || this.state === State.DEAD) return;
+
         if (Input.pressed[Input.Action.LEFT]) {
             this.nextState = State.LEFT;
         }
@@ -62,6 +72,14 @@ export class Player extends Entity {
 
             case State.FALLING:
                 char = 'b';
+                break;
+
+            case State.DYING:
+                char = DEATH_FRAMES[this.deathStep];
+                break;
+
+            case State.DEAD:
+                char = '_';
                 break;
         }
 

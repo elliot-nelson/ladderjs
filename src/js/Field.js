@@ -3,6 +3,7 @@ import { Player } from './Player';
 import { Rock } from './Rock';
 import { LEVEL_COLS, LEVEL_ROWS } from './Constants';
 import { game } from './Game';
+import { State } from './Behavior';
 
 /**
  * Field
@@ -32,8 +33,14 @@ export class Field {
         // Move player based on user input
         this.player.update(this);
 
+        // Check if player should be dead (before moving rocks)
+        this.checkIfPlayerShouldDie();
+
         // Move rocks
-        this.rocks = this.rocks.filter(rock => rock.update(this));
+        for (let rock of this.rocks) rock.update(this);
+
+        // Check if player should be dead (after moving rocks)
+        this.checkIfPlayerShouldDie();
 
         // Collect statues
         if (this.isStatue(this.player.x, this.player.y)) {
@@ -48,10 +55,16 @@ export class Field {
 
         // Dispense new rocks
         if (this.rocks.length < 3 && Math.random() > 0.9) {
-            console.log('NEW ROCK');
             let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
-            console.log(dispenser);
             this.rocks.push(new Rock(dispenser));
+        }
+
+        // Kill dead rocks
+        this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
+
+        // Kill player
+        if (this.player.state === State.DEAD) {
+            game.nextLevel();
         }
     }
 
@@ -96,12 +109,32 @@ export class Field {
         return this.terrain[y][x] === '*';
     }
 
+    isFire(x, y) {
+        return this.terrain[y][x] === '^';
+    }
+
     canClimbUp(x, y) {
         return ['H', '&', '$'].includes(this.terrain[y][x]);
     }
 
     canClimbDown(x, y) {
         return ['H', '&', '$', ' ', '^', '.'].includes(this.terrain[y][x]);
+    }
+
+    checkIfPlayerShouldDie() {
+        if (this.player.state === State.DYING || this.player.state === State.DEAD) return;
+
+        if (this.isFire(this.player.x, this.player.y)) {
+            this.player.state = State.DYING;
+        }
+
+        for (let i = 0; i < this.rocks.length; i++) {
+            if (this.player.x === this.rocks[i].x && this.player.y === this.rocks[i].y) {
+                this.player.state = State.DYING;
+                this.rocks.splice(i, 1);
+                break;
+            }
+        }
     }
 
     static async loadLevel(levelName) {

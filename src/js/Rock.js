@@ -3,6 +3,8 @@ import { State } from './Behavior';
 import { LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
 
+const DEATH_FRAMES = ['%', ':'];
+
 export class Rock extends Entity {
     constructor(dispenser) {
         super();
@@ -10,9 +12,17 @@ export class Rock extends Entity {
         this.y = dispenser.y + 1;
         this.state = State.FALLING;
         this.nextState = undefined;
+        this.deathStep = 0;
     }
 
     update(field) {
+        if (this.state === State.DYING) {
+            this.deathStep++;
+            if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
+        }
+
+        if (this.state === State.DYING || this.state === State.DEAD) return;
+
         if (this.state === State.STOPPED) {
             if (this.x === 0 || !field.emptySpace(this.x - 1, this.y)) {
                 this.nextState = State.RIGHT;
@@ -41,15 +51,24 @@ export class Rock extends Entity {
         }
 
         if (field.isEater(this.x, this.y)) {
-            return false;
+            this.state = State.DYING;
+            return;
         }
 
         this.applyMovement(field);
-
-        return true;
     }
 
     draw() {
-        Text.drawTextColRow('o', this.x, this.y);
+        let char = 'o';
+
+        switch (this.state) {
+            case State.DYING:
+                char = DEATH_FRAMES[this.deathStep];
+                break;
+            case State.DEAD:
+                return;
+        }
+
+        Text.drawTextColRow(char, this.x, this.y);
     }
 }
