@@ -1,5 +1,6 @@
 import { Text } from './Text';
 import { Player } from './Player';
+import { Rock } from './Rock';
 import { LEVEL_COLS, LEVEL_ROWS } from './Constants';
 import { game } from './Game';
 
@@ -20,6 +21,7 @@ export class Field {
 
         this.terrain = level.terrain;
         this.dispensers = level.dispensers;
+        this.rocks = [];
         this.eaters = level.eaters;
         this.player = new Player(level.player.x, level.player.y);
 
@@ -29,6 +31,9 @@ export class Field {
     update() {
         // Move player based on user input
         this.player.update(this);
+
+        // Move rocks
+        this.rocks = this.rocks.filter(rock => rock.update(this));
 
         // Collect statues
         if (this.isStatue(this.player.x, this.player.y)) {
@@ -40,6 +45,14 @@ export class Field {
         if (this.isTreasure(this.player.x, this.player.y)) {
             game.nextLevel();
         }
+
+        // Dispense new rocks
+        if (this.rocks.length < 3 && Math.random() > 0.9) {
+            console.log('NEW ROCK');
+            let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
+            console.log(dispenser);
+            this.rocks.push(new Rock(dispenser));
+        }
     }
 
     draw() {
@@ -48,6 +61,8 @@ export class Field {
         Text.drawTextColRow(screen, 0, 0);
 
         this.player.draw();
+
+        this.rocks.forEach(rock => rock.draw());
 
         // Score
         Text.drawTextColRow(String(this.score) + '    ', 0, 21);
@@ -75,6 +90,10 @@ export class Field {
 
     isTreasure(x, y) {
         return this.terrain[y][x] === '$';
+    }
+
+    isEater(x, y) {
+        return this.terrain[y][x] === '*';
     }
 
     canClimbUp(x, y) {

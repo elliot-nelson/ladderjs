@@ -983,43 +983,17 @@
         ],
     };
 
-    /**
-     * Player
-     */
-    class Player {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.state = State.STOPPED;
-            this.nextState = State.STOPPED;
-            this.jumpStep = 0;
-        }
-
-        update(field) {
+    class Entity {
+        applyMovement(field) {
             let repeat = false;
 
-            if (Input.pressed[Input.Action.LEFT]) {
-                this.nextState = State.LEFT;
-            }
+            // This method contains generic "movement" application for all entities, including
+            // Lad (player) and Der Rocks (enemies). Things like falling, moving left/right, etc.,
+            // work the same for both.
+            //
+            // (There's a bunch of jump logic in here too, and moving UP, which really only applies
+            // to players, but that's OK -- Der Rocks just won't attempt those actions.)
 
-            if (Input.pressed[Input.Action.RIGHT]) {
-                this.nextState = State.RIGHT;
-            }
-
-            if (Input.pressed[Input.Action.UP]) {
-                this.nextState = State.UP;
-            }
-
-            if (Input.pressed[Input.Action.DOWN]) {
-                this.nextState = State.DOWN;
-            }
-
-            if (Input.pressed[Input.Action.JUMP]) {
-                this.nextState = State.START_JUMP;
-            }
-
-            // If we are stopped or moving left or right, and we are asked to do something,
-            // then try to do it.
             if (this.nextState) {
                 switch (this.state) {
                     case State.STOPPED:
@@ -1098,10 +1072,8 @@
                         break;
                     }
                     if (field.emptySpace(this.x - 1, this.y)) {
-                        console.log('x--');
                         this.x--;
                     } else {
-                        console.log('stop');
                         this.nextState = State.STOPPED;
                     }
                     break;
@@ -1114,10 +1086,8 @@
                         break;
                     }
                     if (field.emptySpace(this.x + 1, this.y)) {
-                        console.log('x+-');
                         this.x++;
                     } else {
-                        console.log('stop');
                         this.nextState = State.STOPPED;
                     }
                     break;
@@ -1142,7 +1112,6 @@
                 case State.JUMP_LEFT:
                 case State.JUMP_UP:
                     let step = JUMP_FRAMES[this.state][this.jumpStep];
-                    console.log(this.state, this.jumpStep, JUMP_FRAMES[this.state].length);
                     if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
                         let terrain = field.terrain[this.y + step.y][this.x + step.x];
                         if (['=', '|', '-'].includes(terrain)) {
@@ -1203,79 +1172,48 @@
                     break;
             }
 
-            /*
-            { If stopped or going left or going right and     }
-            { request to do something else, then try to do it }
-            IF (a.DirRequest <> NONE) THEN BEGIN
-              CASE a.Dir OF
-                STOPPED, PENDING:
-                  IF a.DirRequest IN [LEFT, RIGHT, UP, DOWN, FALLING] THEN
-                    UpdateDir(a);
+            // If we were attempting to move somewhere and realized we should be falling instead,
+            // we want to re-run the entire algorithm once. This avoids what boils down to a "skipped
+            // frame" from the user's point of view.
+            if (repeat) return this.applyMovement(field);
+        }
+    }
 
-                JUMPUP:
-                  IF a.DirRequest = LEFT THEN
-                    a.Dir := JUMPLEFT
-                  ELSE IF a.DirRequest = RIGHT THEN
-                    a.Dir := JUMPRIGHT;
+    /**
+     * Player
+     */
+    class Player extends Entity {
+        constructor(x, y) {
+            super();
+            this.x = x;
+            this.y = y;
+            this.state = State.STOPPED;
+            this.nextState = State.STOPPED;
+            this.jumpStep = 0;
+        }
 
-                RIGHT:
-                  IF a.DirRequest IN [LEFT, STOPPED] THEN
-                    UpdateDir(a);
-
-                LEFT:
-                  IF a.DirRequest IN [RIGHT, STOPPED] THEN
-                    UpdateDir(a);
-
-                UP, DOWN:
-                  IF a.DirRequest IN [STOPPED, UP, DOWN, RIGHT, LEFT] THEN
-                    UpdateDir(a);
-
-                JUMPUP:
-                  IF a.DirRequest = LEFT THEN
-                    a.Dir := JUMPLEFT
-                  ELSE
-                    a.Dir := JUMPRIGHT;
-
-                JUMPRIGHT, JUMPLEFT:
-                  IF a.DirRequest = STOPPED THEN
-                    UpdateDir(a);
-
-                PENDING:
-                  UpdateDir(a);
-
-              END;
-            END;
-
-
-            if (this.nextState) {
-                if (field.onSolid(this) && this.nextState
-
-            if (field.onSolid(this)) {
-                if (this.nextState) {
-                    if (this.nextState === State.JUMP_START) {
-                        if (this.state ===
-                    this.state = this.nextState;
-                    this.nextState = undefined;
-
-                    if (this.state === State.JUMP_START) {
-
-                    }
-                }
-
+        update(field) {
+            if (Input.pressed[Input.Action.LEFT]) {
+                this.nextState = State.LEFT;
             }
 
-            if (this.state === State.JUMPING) {
-                let dir = this.jumpFrames.shift();
-                this.x += dir.x;
-                this.y += dir.y;
-
-                if (this.jumpFrames.length === 0) {
-                    this.state = this.nextState;
-                }
+            if (Input.pressed[Input.Action.RIGHT]) {
+                this.nextState = State.RIGHT;
             }
-            */
 
-            if (repeat) return this.update(field);
+            if (Input.pressed[Input.Action.UP]) {
+                this.nextState = State.UP;
+            }
+
+            if (Input.pressed[Input.Action.DOWN]) {
+                this.nextState = State.DOWN;
+            }
+
+            if (Input.pressed[Input.Action.JUMP]) {
+                this.nextState = State.START_JUMP;
+            }
+
+            return this.applyMovement(field);
         }
 
         draw() {
@@ -1881,6 +1819,57 @@
         }
     };
 
+    class Rock extends Entity {
+        constructor(dispenser) {
+            super();
+            this.x = dispenser.x;
+            this.y = dispenser.y + 1;
+            this.state = State.FALLING;
+            this.nextState = undefined;
+        }
+
+        update(field) {
+            if (this.state === State.STOPPED) {
+                if (this.x === 0 || !field.emptySpace(this.x - 1, this.y)) {
+                    this.nextState = State.RIGHT;
+                } else if (this.x === LEVEL_COLS - 1 || !field.emptySpace(this.x + 1, this.y)) {
+                    this.nextState = State.LEFT;
+                } else {
+                    this.nextState = Math.random() > 0.5 ? State.LEFT : State.RIGHT;
+                }
+            }
+
+            if (this.x === 0 && this.state === State.LEFT) {
+                this.state = State.RIGHT;
+            }
+
+            if (this.x === LEVEL_COLS - 1 && this.state === State.RIGHT) {
+                this.state = State.LEFT;
+            }
+
+            if (this.state !== State.FALLING && !field.onSolid(this.x, this.y)) {
+                this.nextState = State.FALLING;
+            }
+
+            if (field.isLadder(this.x, this.y + 1) && [State.LEFT, State.RIGHT].includes(this.state)) {
+                let r = Math.floor(Math.random() * 4);
+                this.nextState = [State.LEFT, State.RIGHT, State.DOWN, State.DOWN][r];
+            }
+
+            if (field.isEater(this.x, this.y)) {
+                return false;
+            }
+
+            this.applyMovement(field);
+
+            return true;
+        }
+
+        draw() {
+            Text.drawTextColRow('o', this.x, this.y);
+        }
+    }
+
     /**
      * Field
      *
@@ -1898,6 +1887,7 @@
 
             this.terrain = level.terrain;
             this.dispensers = level.dispensers;
+            this.rocks = [];
             this.eaters = level.eaters;
             this.player = new Player(level.player.x, level.player.y);
 
@@ -1907,6 +1897,9 @@
         update() {
             // Move player based on user input
             this.player.update(this);
+
+            // Move rocks
+            this.rocks = this.rocks.filter(rock => rock.update(this));
 
             // Collect statues
             if (this.isStatue(this.player.x, this.player.y)) {
@@ -1918,6 +1911,14 @@
             if (this.isTreasure(this.player.x, this.player.y)) {
                 game.nextLevel();
             }
+
+            // Dispense new rocks
+            if (this.rocks.length < 3 && Math.random() > 0.9) {
+                console.log('NEW ROCK');
+                let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
+                console.log(dispenser);
+                this.rocks.push(new Rock(dispenser));
+            }
         }
 
         draw() {
@@ -1926,6 +1927,8 @@
             Text.drawTextColRow(screen, 0, 0);
 
             this.player.draw();
+
+            this.rocks.forEach(rock => rock.draw());
 
             // Score
             Text.drawTextColRow(String(this.score) + '    ', 0, 21);
@@ -1953,6 +1956,10 @@
 
         isTreasure(x, y) {
             return this.terrain[y][x] === '$';
+        }
+
+        isEater(x, y) {
+            return this.terrain[y][x] === '*';
         }
 
         canClimbUp(x, y) {
@@ -2056,7 +2063,7 @@
         }
 
         start() {
-            this.fps = 30;
+            this.fps = 20;
             this.frame = 0;
             this.frameTimes = [];
             this.update();

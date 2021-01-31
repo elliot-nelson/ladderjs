@@ -53,7 +53,7 @@ export class Game {
     }
 
     start() {
-        this.fps = 30;
+        this.fps = 20;
         this.frame = 0;
         this.frameTimes = [];
         this.update();
