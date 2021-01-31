@@ -4,6 +4,7 @@ import { Rock } from './Rock';
 import { LEVEL_COLS, LEVEL_ROWS } from './Constants';
 import { game } from './Game';
 import { State } from './Behavior';
+import { Screen } from './Screen';
 
 /**
  * Field
@@ -24,6 +25,7 @@ export class Field {
         this.dispensers = level.dispensers;
         this.rocks = [];
         this.eaters = level.eaters;
+        console.log(level.player);
         this.player = new Player(level.player.x, level.player.y);
 
         this.score = 0;
@@ -32,6 +34,7 @@ export class Field {
     update() {
         // Move player based on user input
         this.player.update(this);
+        console.log(['updated', this.player.x, this.player.y]);
 
         // Check if player should be dead (before moving rocks)
         this.checkIfPlayerShouldDie();
@@ -69,16 +72,20 @@ export class Field {
     }
 
     draw() {
+        Screen.clear();
+
         // Draw terrain
-        let screen = this.terrain.map(row => row.join('')).join('\n');
-        Text.drawTextColRow(screen, 0, 0);
+        Screen.write(this.terrain.map(row => row.join('')), 0, 0);
 
         this.player.draw();
 
         this.rocks.forEach(rock => rock.draw());
 
         // Score
-        Text.drawTextColRow(String(this.score) + '    ', 0, 21);
+        Screen.write(String(this.score), 0, 21);
+
+        // Lives
+        Screen.write(String(4), 8, 21);
     }
 
     onSolid(x, y) {

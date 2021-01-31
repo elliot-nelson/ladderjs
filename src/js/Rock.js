@@ -2,6 +2,7 @@ import { Text } from './Text';
 import { State } from './Behavior';
 import { LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
+import { Screen } from './Screen';
 
 const DEATH_FRAMES = ['%', ':'];
 
@@ -69,6 +70,6 @@ export class Rock extends Entity {
                 return;
         }
 
-        Text.drawTextColRow(char, this.x, this.y);
+        Screen.write(char, this.x, this.y);
     }
 }

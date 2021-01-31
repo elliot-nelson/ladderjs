@@ -3,7 +3,6 @@
 import { Sprite } from './Sprite';
 import { Input } from './input/Input';
 import { Text } from './Text';
-import { Player } from './Player';
 import { Viewport } from './Viewport';
 import { TITLE, GAME_WIDTH, GAME_HEIGHT } from './Constants';
 import { rgba, createCanvas, clamp, partialText, uv2xy, xy2qr } from './Util';
@@ -15,6 +14,7 @@ import { ScreenShake } from './ScreenShake';
 import { World } from './World';
 import { Terrain } from './Terrain';
 import { Field } from './Field';
+import { Screen } from './Screen';
 
 /**
  * Game state.
@@ -23,6 +23,7 @@ export class Game {
     init() {
         Sprite.loadSpritesheet(async () => {
             await Viewport.init();
+            await Screen.init();
             await Sprite.init();
             await Terrain.init();
             Text.init();
@@ -37,8 +38,6 @@ export class Game {
             this.roomsCleared = {};
             this.shadowOffset = 0;
             this.screenshakes = [];
-            this.player = new Player();
-            this.entities.push(this.player);
             this.camera = { pos: { x: 0, y: 0 } };
             this.cameraFocus = { pos: { x: 0, y: 0 } };
 
@@ -220,6 +219,8 @@ export class Game {
         if (this.field) {
             this.field.draw();
         }
+
+        Screen.drawToViewport();
 
         return;
 

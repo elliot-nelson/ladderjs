@@ -6,6 +6,7 @@ import { Input } from './input/Input';
 import { Text } from './Text';
 import { LEVEL_ROWS, LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
+import { Screen } from './Screen';
 
 const DEATH_FRAMES = ['p', 'b', 'd', 'q', 'p', 'b', 'd', 'q', '-', '-', '_'];
 
@@ -21,6 +22,7 @@ export class Player extends Entity {
         this.nextState = State.STOPPED;
         this.jumpStep = 0;
         this.deathStep = 0;
+        console.log('player constructed', x, y);
     }
 
     update(field) {
@@ -51,6 +53,7 @@ export class Player extends Entity {
             this.nextState = State.START_JUMP;
         }
 
+        console.log(this.x, this.y);
         return this.applyMovement(field);
     }
 
@@ -83,6 +86,7 @@ export class Player extends Entity {
                 break;
         }
 
-        Text.drawTextColRow(char, this.x, this.y);
+        console.log(this.x, this.y);
+        Screen.write(char, this.x, this.y);
     }
 }
