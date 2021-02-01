@@ -12,6 +12,11 @@
     const GAME_WIDTH = 640;
     const GAME_HEIGHT = 400;
 
+    // The "screen area". This is an ASCII game and so most of the game logic doesn't care about browser
+    // pixels, we care about the ASCII display area (80x25).
+    const SCREEN_WIDTH = 80;
+    const SCREEN_HEIGHT = 25;
+
     // The size of our on-screen characters (given dimensions above, this is 80 cols by 25 rows).
     const CHAR_WIDTH = 8;
     const CHAR_HEIGHT = 16;
@@ -938,309 +943,6 @@
         return canvas.canvas;
     }
 
-    // This is our list of STATES. Each entity starts out in one of these states and can move between
-    // them based on events that happen in the game. (Note that some of these are directions, but
-    // since an entity keeps moving in the direction it is going unless stopped, directions are
-    // states in this game.)
-    const State = {
-        PENDING:    0,
-        STOPPED:    1,
-        UP:         2,
-        LEFT:       3,
-        DOWN:       4,
-        RIGHT:      5,
-        FALLING:    6,
-        START_JUMP: 7,
-        JUMP_LEFT:  8,
-        JUMP_RIGHT: 9,
-        JUMP_UP:    10
-    };
-
-    const JUMP_FRAMES = {
-        [State.JUMP_RIGHT]: [
-            { x: 1, y: -1 },
-            { x: 1, y: -1 },
-            { x: 1, y: 0 },
-            { x: 1, y: 0 },
-            { x: 1, y: 1 },
-            { x: 1, y: 1 }
-        ],
-        [State.JUMP_LEFT]: [
-            { x: -1, y: -1 },
-            { x: -1, y: -1 },
-            { x: -1, y: 0 },
-            { x: -1, y: 0 },
-            { x: -1, y: 1 },
-            { x: -1, y: 1 }
-        ],
-        [State.JUMP_UP]: [
-            { x: 0, y: -1 },
-            { x: 0, y: -1 },
-            { x: 0, y: 0 },
-            { x: 0, y: 1 },
-            { x: 0, y: 1 },
-            { x: 0, y: 0 }
-        ],
-    };
-
-    class Entity {
-        applyMovement(field) {
-            let repeat = false;
-
-            // This method contains generic "movement" application for all entities, including
-            // Lad (player) and Der Rocks (enemies). Things like falling, moving left/right, etc.,
-            // work the same for both.
-            //
-            // (There's a bunch of jump logic in here too, and moving UP, which really only applies
-            // to players, but that's OK -- Der Rocks just won't attempt those actions.)
-
-            if (this.nextState) {
-                switch (this.state) {
-                    case State.STOPPED:
-                    case State.LEFT:
-                    case State.RIGHT:
-                        if ([State.LEFT, State.RIGHT, State.STOPPED].includes(this.nextState)) {
-                            this.state = this.nextState;
-                            this.nextState = undefined;
-                        }
-                        break;
-
-                    case State.UP:
-                    case State.DOWN:
-                        // Normal
-                        if ([State.LEFT, State.RIGHT].includes(this.nextState)) {
-                            this.state = this.nextState;
-                            this.nextState = undefined;
-                        }
-                        break;
-                }
-            }
-
-            if (this.nextState === State.START_JUMP) {
-                // Special case: the user wants to jump!
-                //
-                // If the player is standing on something solid, we initiate a jump based on the current
-                // movement of the player. If not, we (sort of) ignore the request to jump... although
-                // it does subtly change the behavior upon landing.
-                if (field.onSolid(this.x, this.y)) {
-                    if (this.state === State.STOPPED || this.state === State.FALLING) {
-                        this.state = State.JUMP_UP;
-                        this.jumpStep = 0;
-                        this.nextState = State.STOPPED;
-                    } else if (this.state === State.LEFT || this.state === State.JUMP_LEFT) {
-                        this.state = State.JUMP_LEFT;
-                        this.jumpStep = 0;
-                        this.nextState = State.LEFT;
-                    } else if (this.state === State.RIGHT || this.state === State.JUMP_RIGHT) {
-                        this.state = State.JUMP_RIGHT;
-                        this.jumpStep = 0;
-                        this.nextState = State.RIGHT;
-                    }
-                } else {
-                    if (this.state === State.JUMP_UP || this.state === State.FALLING) {
-                        this.nextState = State.STOPPED;
-                    } else if (this.state === State.JUMP_RIGHT) {
-                        this.nextState = State.RIGHT;
-                    } else if (this.state === State.JUMP_LEFT) {
-                        this.nextState = State.LEFT;
-                    }
-                }
-            } else if (this.nextState === State.UP && field.isLadder(this.x, this.y)) {
-                // Special case: the user wants to go up!
-                //
-                // If the user is on a ladder, we can start ascending. Note that if the user is not
-                // on a ladder we ignore their input, which is intentional -- this allows queued
-                // (pacman) input, where we can tap UP a little before reaching the ladder.
-                this.state = State.UP;
-                this.nextState = undefined;
-            } else if (this.nextState === State.DOWN && (field.isLadder(this.x, this.y) || field.isLadder(this.x, this.y + 1))) {
-                // Special case: the player wants to go down!
-                //
-                // If the player is on (or above) a ladder, we can start descending. Note that if the player is not
-                // on a ladder we ignore their input, which is intentional -- this allows queued
-                // (pacman) input, where we can tap DOWN a little before reaching the ladder.
-                this.state = State.DOWN;
-                this.nextState = undefined;
-            }
-
-            switch (this.state) {
-                case State.LEFT:
-                    if (!field.onSolid(this.x, this.y)) {
-                        this.nextState = State.LEFT;
-                        this.state = State.FALLING;
-                        repeat = true;
-                        break;
-                    }
-                    if (field.emptySpace(this.x - 1, this.y)) {
-                        this.x--;
-                    } else {
-                        this.nextState = State.STOPPED;
-                    }
-                    break;
-
-                case State.RIGHT:
-                    if (!field.onSolid(this.x, this.y)) {
-                        this.nextState = State.RIGHT;
-                        this.state = State.FALLING;
-                        repeat = true;
-                        break;
-                    }
-                    if (field.emptySpace(this.x + 1, this.y)) {
-                        this.x++;
-                    } else {
-                        this.nextState = State.STOPPED;
-                    }
-                    break;
-
-                case State.UP:
-                    if (field.canClimbUp(this.x, this.y - 1)) {
-                        this.y--;
-                    } else {
-                        this.state = State.STOPPED;
-                    }
-                    break;
-
-                case State.DOWN:
-                    if (field.canClimbDown(this.x, this.y + 1)) {
-                        this.y++;
-                    } else {
-                        this.state = State.STOPPED;
-                    }
-                    break;
-
-                case State.JUMP_RIGHT:
-                case State.JUMP_LEFT:
-                case State.JUMP_UP:
-                    let step = JUMP_FRAMES[this.state][this.jumpStep];
-                    if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
-                        let terrain = field.terrain[this.y + step.y][this.x + step.x];
-                        if (['=', '|', '-'].includes(terrain)) {
-                            if (field.onSolid(this.x, this.y)) {
-                                console.log('a');
-                                this.state = this.nextState;
-                                this.nextState = undefined;
-                            } else {
-                                console.log('b');
-                                switch (this.state) {
-                                    case State.JUMP_RIGHT:
-                                        this.nextState = State.RIGHT;
-                                        break;
-                                    case State.JUMP_LEFT:
-                                        this.nextState = State.LEFT;
-                                        break;
-                                    case State.JUMP_UP:
-                                        this.nextState = State.UP;
-                                        break;
-                                }
-                                this.state = State.FALLING;
-                            }
-                        } else if (terrain === 'H') {
-                                console.log('c');
-                            this.x += step.x;
-                            this.y += step.y;
-                            this.state = State.STOPPED;
-                            this.nextState = undefined;
-                        } else {
-                                console.log('d');
-                            this.x += step.x;
-                            this.y += step.y;
-                            this.jumpStep++;
-
-                            if (this.jumpStep >= JUMP_FRAMES[this.state].length) {
-                                this.state = this.nextState;
-                                this.nextState = undefined;
-                            }
-                        }
-                    } else {
-                                console.log('e');
-                        if (field.onSolid(this.x, this.y)) {
-                            this.state = this.nextState;
-                            this.nextState = undefined;
-                        } else {
-                            this.state = State.FALLING;
-                            this.nextState = State.STOPPED;
-                        }
-                    }
-                    break;
-
-                case State.FALLING:
-                    if (field.onSolid(this.x, this.y)) {
-                        this.state = this.nextState || State.STOPPED;
-                    } else {
-                        this.y++;
-                    }
-                    break;
-            }
-
-            // If we were attempting to move somewhere and realized we should be falling instead,
-            // we want to re-run the entire algorithm once. This avoids what boils down to a "skipped
-            // frame" from the user's point of view.
-            if (repeat) return this.applyMovement(field);
-        }
-    }
-
-    /**
-     * Player
-     */
-    class Player extends Entity {
-        constructor(x, y) {
-            super();
-            this.x = x;
-            this.y = y;
-            this.state = State.STOPPED;
-            this.nextState = State.STOPPED;
-            this.jumpStep = 0;
-        }
-
-        update(field) {
-            if (Input.pressed[Input.Action.LEFT]) {
-                this.nextState = State.LEFT;
-            }
-
-            if (Input.pressed[Input.Action.RIGHT]) {
-                this.nextState = State.RIGHT;
-            }
-
-            if (Input.pressed[Input.Action.UP]) {
-                this.nextState = State.UP;
-            }
-
-            if (Input.pressed[Input.Action.DOWN]) {
-                this.nextState = State.DOWN;
-            }
-
-            if (Input.pressed[Input.Action.JUMP]) {
-                this.nextState = State.START_JUMP;
-            }
-
-            return this.applyMovement(field);
-        }
-
-        draw() {
-            let char = 'g';
-
-            switch (this.state) {
-                case State.RIGHT:
-                case State.JUMP_RIGHT:
-                case State.UP:
-                case State.DOWN:
-                    char = 'p';
-                    break;
-
-                case State.LEFT:
-                case State.JUMP_LEFT:
-                    char = 'q';
-                    break;
-
-                case State.FALLING:
-                    char = 'b';
-                    break;
-            }
-
-            Text.drawTextColRow(char, this.x, this.y);
-        }
-    }
-
     /**
      * Movement
      */
@@ -1819,6 +1521,375 @@
         }
     };
 
+    // This is our list of STATES. Each entity starts out in one of these states and can move between
+    // them based on events that happen in the game. (Note that some of these are directions, but
+    // since an entity keeps moving in the direction it is going unless stopped, directions are
+    // states in this game.)
+    const State = {
+        STOPPED:    1,         // Standing still
+        UP:         2,         // Moving up (player only)
+        LEFT:       3,         // Moving left
+        DOWN:       4,         // Moving down
+        RIGHT:      5,         // Moving right
+        FALLING:    6,         // Falling
+        START_JUMP: 7,         // About to start a jump (player only)
+        JUMP_LEFT:  8,         // Jumping left (player only)
+        JUMP_RIGHT: 9,         // Jumping right (player only)
+        JUMP_UP:    10,        // Jumping straight up (player only)
+        DYING:      11,        // Dying (used as a death animation)
+        DEAD:       12         // Dead (for player, restart level; for rock, disappear)
+    };
+
+    const JUMP_FRAMES = {
+        [State.JUMP_RIGHT]: [
+            { x: 1, y: -1 },
+            { x: 1, y: -1 },
+            { x: 1, y: 0 },
+            { x: 1, y: 0 },
+            { x: 1, y: 1 },
+            { x: 1, y: 1 }
+        ],
+        [State.JUMP_LEFT]: [
+            { x: -1, y: -1 },
+            { x: -1, y: -1 },
+            { x: -1, y: 0 },
+            { x: -1, y: 0 },
+            { x: -1, y: 1 },
+            { x: -1, y: 1 }
+        ],
+        [State.JUMP_UP]: [
+            { x: 0, y: -1 },
+            { x: 0, y: -1 },
+            { x: 0, y: 0 },
+            { x: 0, y: 1 },
+            { x: 0, y: 1 },
+            { x: 0, y: 0 }
+        ],
+    };
+
+    class Entity {
+        applyMovement(field) {
+            let repeat = false;
+
+            // This method contains generic "movement" application for all entities, including
+            // Lad (player) and Der Rocks (enemies). Things like falling, moving left/right, etc.,
+            // work the same for both.
+            //
+            // (There's a bunch of jump logic in here too, and moving UP, which really only applies
+            // to players, but that's OK -- Der Rocks just won't attempt those actions.)
+
+            if (this.nextState) {
+                switch (this.state) {
+                    case State.STOPPED:
+                    case State.LEFT:
+                    case State.RIGHT:
+                        if ([State.LEFT, State.RIGHT, State.STOPPED].includes(this.nextState)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        }
+                        break;
+
+                    case State.UP:
+                    case State.DOWN:
+                        // Normal
+                        if ([State.LEFT, State.RIGHT].includes(this.nextState)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        }
+                        break;
+                }
+            }
+
+            if (this.nextState === State.START_JUMP) {
+                // Special case: the user wants to jump!
+                //
+                // If the player is standing on something solid, we initiate a jump based on the current
+                // movement of the player. If not, we (sort of) ignore the request to jump... although
+                // it does subtly change the behavior upon landing.
+                if (field.onSolid(this.x, this.y)) {
+                    if (this.state === State.STOPPED || this.state === State.FALLING) {
+                        this.state = State.JUMP_UP;
+                        this.jumpStep = 0;
+                        this.nextState = State.STOPPED;
+                    } else if (this.state === State.LEFT || this.state === State.JUMP_LEFT) {
+                        this.state = State.JUMP_LEFT;
+                        this.jumpStep = 0;
+                        this.nextState = State.LEFT;
+                    } else if (this.state === State.RIGHT || this.state === State.JUMP_RIGHT) {
+                        this.state = State.JUMP_RIGHT;
+                        this.jumpStep = 0;
+                        this.nextState = State.RIGHT;
+                    }
+                } else {
+                    if (this.state === State.JUMP_UP || this.state === State.FALLING) {
+                        this.nextState = State.STOPPED;
+                    } else if (this.state === State.JUMP_RIGHT) {
+                        this.nextState = State.RIGHT;
+                    } else if (this.state === State.JUMP_LEFT) {
+                        this.nextState = State.LEFT;
+                    }
+                }
+            } else if (this.nextState === State.UP && field.isLadder(this.x, this.y)) {
+                // Special case: the user wants to go up!
+                //
+                // If the user is on a ladder, we can start ascending. Note that if the user is not
+                // on a ladder we ignore their input, which is intentional -- this allows queued
+                // (pacman) input, where we can tap UP a little before reaching the ladder.
+                this.state = State.UP;
+                this.nextState = undefined;
+            } else if (this.nextState === State.DOWN && (field.isLadder(this.x, this.y) || field.isLadder(this.x, this.y + 1))) {
+                // Special case: the player wants to go down!
+                //
+                // If the player is on (or above) a ladder, we can start descending. Note that if the player is not
+                // on a ladder we ignore their input, which is intentional -- this allows queued
+                // (pacman) input, where we can tap DOWN a little before reaching the ladder.
+                this.state = State.DOWN;
+                this.nextState = undefined;
+            }
+
+            switch (this.state) {
+                case State.LEFT:
+                    if (!field.onSolid(this.x, this.y)) {
+                        this.nextState = State.LEFT;
+                        this.state = State.FALLING;
+                        repeat = true;
+                        break;
+                    }
+                    if (field.emptySpace(this.x - 1, this.y)) {
+                        this.x--;
+                    } else {
+                        this.nextState = State.STOPPED;
+                    }
+                    break;
+
+                case State.RIGHT:
+                    if (!field.onSolid(this.x, this.y)) {
+                        this.nextState = State.RIGHT;
+                        this.state = State.FALLING;
+                        repeat = true;
+                        break;
+                    }
+                    if (field.emptySpace(this.x + 1, this.y)) {
+                        this.x++;
+                    } else {
+                        this.nextState = State.STOPPED;
+                    }
+                    break;
+
+                case State.UP:
+                    if (field.canClimbUp(this.x, this.y - 1)) {
+                        this.y--;
+                    } else {
+                        this.state = State.STOPPED;
+                    }
+                    break;
+
+                case State.DOWN:
+                    if (field.canClimbDown(this.x, this.y + 1)) {
+                        this.y++;
+                    } else {
+                        this.state = State.STOPPED;
+                    }
+                    break;
+
+                case State.JUMP_RIGHT:
+                case State.JUMP_LEFT:
+                case State.JUMP_UP:
+                    let step = JUMP_FRAMES[this.state][this.jumpStep];
+                    if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
+                        let terrain = field.terrain[this.y + step.y][this.x + step.x];
+                        if (['=', '|', '-'].includes(terrain)) {
+                            if (field.onSolid(this.x, this.y)) {
+                                console.log('a');
+                                this.state = this.nextState;
+                                this.nextState = undefined;
+                            } else {
+                                console.log('b');
+                                switch (this.state) {
+                                    case State.JUMP_RIGHT:
+                                        this.nextState = State.RIGHT;
+                                        break;
+                                    case State.JUMP_LEFT:
+                                        this.nextState = State.LEFT;
+                                        break;
+                                    case State.JUMP_UP:
+                                        this.nextState = State.UP;
+                                        break;
+                                }
+                                this.state = State.FALLING;
+                            }
+                        } else if (terrain === 'H') {
+                                console.log('c');
+                            this.x += step.x;
+                            this.y += step.y;
+                            this.state = State.STOPPED;
+                            this.nextState = undefined;
+                        } else {
+                                console.log('d');
+                            this.x += step.x;
+                            this.y += step.y;
+                            this.jumpStep++;
+
+                            if (this.jumpStep >= JUMP_FRAMES[this.state].length) {
+                                this.state = this.nextState;
+                                this.nextState = undefined;
+                            }
+                        }
+                    } else {
+                                console.log('e');
+                        if (field.onSolid(this.x, this.y)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        } else {
+                            this.state = State.FALLING;
+                            this.nextState = State.STOPPED;
+                        }
+                    }
+                    break;
+
+                case State.FALLING:
+                    if (field.onSolid(this.x, this.y)) {
+                        this.state = this.nextState || State.STOPPED;
+                    } else {
+                        this.y++;
+                    }
+                    break;
+            }
+
+            // If we were attempting to move somewhere and realized we should be falling instead,
+            // we want to re-run the entire algorithm once. This avoids what boils down to a "skipped
+            // frame" from the user's point of view.
+            if (repeat) return this.applyMovement(field);
+        }
+    }
+
+    const Screen = {
+        init() {
+            this.screen = [];
+            for (let y = 0; y < SCREEN_HEIGHT; y++) {
+                this.screen.push([]);
+            }
+            this.clear();
+        },
+
+        clear() {
+            for (let y = 0; y < SCREEN_HEIGHT; y++) {
+                for (let x = 0; x < SCREEN_WIDTH; x++) {
+                    this.screen[y][x] = ' ';
+                }
+            }
+        },
+
+        write(text, x, y) {
+            if (!Array.isArray(text)) text = [text];
+
+            console.log(text, x, y);
+            for (let j = 0; j < text.length; j++) {
+                for (let i = 0; i < text[j].length; i++) {
+                    //console.log(text[j][i], y + j, x + i);
+                    this.screen[y + j][x + i] = text[j][i];
+                }
+            }
+        },
+
+        drawToViewport() {
+            let text = this.screen.map(row => row.join('')).join('\n');
+
+            Text.drawText(
+                Viewport.ctx,
+                Text.splitParagraph(text, Viewport.width),
+                0, 0,
+                1,
+                Text.terminal, Text.terminal_shadow
+            );
+        }
+    };
+
+    const DEATH_FRAMES = ['p', 'b', 'd', 'q', 'p', 'b', 'd', 'q', '-', '-', '_'];
+
+    /**
+     * Player
+     */
+    class Player extends Entity {
+        constructor(x, y) {
+            super();
+            this.x = x;
+            this.y = y;
+            this.state = State.STOPPED;
+            this.nextState = State.STOPPED;
+            this.jumpStep = 0;
+            this.deathStep = 0;
+            console.log('player constructed', x, y);
+        }
+
+        update(field) {
+            if (this.state === State.DYING) {
+                this.deathStep++;
+                if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
+            }
+
+            if (this.state === State.DYING || this.state === State.DEAD) return;
+
+            if (Input.pressed[Input.Action.LEFT]) {
+                this.nextState = State.LEFT;
+            }
+
+            if (Input.pressed[Input.Action.RIGHT]) {
+                this.nextState = State.RIGHT;
+            }
+
+            if (Input.pressed[Input.Action.UP]) {
+                this.nextState = State.UP;
+            }
+
+            if (Input.pressed[Input.Action.DOWN]) {
+                this.nextState = State.DOWN;
+            }
+
+            if (Input.pressed[Input.Action.JUMP]) {
+                this.nextState = State.START_JUMP;
+            }
+
+            console.log(this.x, this.y);
+            return this.applyMovement(field);
+        }
+
+        draw() {
+            let char = 'g';
+
+            switch (this.state) {
+                case State.RIGHT:
+                case State.JUMP_RIGHT:
+                case State.UP:
+                case State.DOWN:
+                    char = 'p';
+                    break;
+
+                case State.LEFT:
+                case State.JUMP_LEFT:
+                    char = 'q';
+                    break;
+
+                case State.FALLING:
+                    char = 'b';
+                    break;
+
+                case State.DYING:
+                    char = DEATH_FRAMES[this.deathStep];
+                    break;
+
+                case State.DEAD:
+                    char = '_';
+                    break;
+            }
+
+            console.log(this.x, this.y);
+            Screen.write(char, this.x, this.y);
+        }
+    }
+
+    const DEATH_FRAMES$1 = ['%', ':'];
+
     class Rock extends Entity {
         constructor(dispenser) {
             super();
@@ -1826,9 +1897,17 @@
             this.y = dispenser.y + 1;
             this.state = State.FALLING;
             this.nextState = undefined;
+            this.deathStep = 0;
         }
 
         update(field) {
+            if (this.state === State.DYING) {
+                this.deathStep++;
+                if (this.deathStep >= DEATH_FRAMES$1.length) this.state = State.DEAD;
+            }
+
+            if (this.state === State.DYING || this.state === State.DEAD) return;
+
             if (this.state === State.STOPPED) {
                 if (this.x === 0 || !field.emptySpace(this.x - 1, this.y)) {
                     this.nextState = State.RIGHT;
@@ -1857,16 +1936,25 @@
             }
 
             if (field.isEater(this.x, this.y)) {
-                return false;
+                this.state = State.DYING;
+                return;
             }
 
             this.applyMovement(field);
-
-            return true;
         }
 
         draw() {
-            Text.drawTextColRow('o', this.x, this.y);
+            let char = 'o';
+
+            switch (this.state) {
+                case State.DYING:
+                    char = DEATH_FRAMES$1[this.deathStep];
+                    break;
+                case State.DEAD:
+                    return;
+            }
+
+            Screen.write(char, this.x, this.y);
         }
     }
 
@@ -1889,6 +1977,7 @@
             this.dispensers = level.dispensers;
             this.rocks = [];
             this.eaters = level.eaters;
+            console.log(level.player);
             this.player = new Player(level.player.x, level.player.y);
 
             this.score = 0;
@@ -1897,9 +1986,16 @@
         update() {
             // Move player based on user input
             this.player.update(this);
+            console.log(['updated', this.player.x, this.player.y]);
+
+            // Check if player should be dead (before moving rocks)
+            this.checkIfPlayerShouldDie();
 
             // Move rocks
-            this.rocks = this.rocks.filter(rock => rock.update(this));
+            for (let rock of this.rocks) rock.update(this);
+
+            // Check if player should be dead (after moving rocks)
+            this.checkIfPlayerShouldDie();
 
             // Collect statues
             if (this.isStatue(this.player.x, this.player.y)) {
@@ -1914,24 +2010,34 @@
 
             // Dispense new rocks
             if (this.rocks.length < 3 && Math.random() > 0.9) {
-                console.log('NEW ROCK');
                 let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
-                console.log(dispenser);
                 this.rocks.push(new Rock(dispenser));
+            }
+
+            // Kill dead rocks
+            this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
+
+            // Kill player
+            if (this.player.state === State.DEAD) {
+                game.nextLevel();
             }
         }
 
         draw() {
+            Screen.clear();
+
             // Draw terrain
-            let screen = this.terrain.map(row => row.join('')).join('\n');
-            Text.drawTextColRow(screen, 0, 0);
+            Screen.write(this.terrain.map(row => row.join('')), 0, 0);
 
             this.player.draw();
 
             this.rocks.forEach(rock => rock.draw());
 
             // Score
-            Text.drawTextColRow(String(this.score) + '    ', 0, 21);
+            Screen.write(String(this.score), 0, 21);
+
+            // Lives
+            Screen.write(String(4), 8, 21);
         }
 
         onSolid(x, y) {
@@ -1962,12 +2068,32 @@
             return this.terrain[y][x] === '*';
         }
 
+        isFire(x, y) {
+            return this.terrain[y][x] === '^';
+        }
+
         canClimbUp(x, y) {
             return ['H', '&', '$'].includes(this.terrain[y][x]);
         }
 
         canClimbDown(x, y) {
             return ['H', '&', '$', ' ', '^', '.'].includes(this.terrain[y][x]);
+        }
+
+        checkIfPlayerShouldDie() {
+            if (this.player.state === State.DYING || this.player.state === State.DEAD) return;
+
+            if (this.isFire(this.player.x, this.player.y)) {
+                this.player.state = State.DYING;
+            }
+
+            for (let i = 0; i < this.rocks.length; i++) {
+                if (this.player.x === this.rocks[i].x && this.player.y === this.rocks[i].y) {
+                    this.player.state = State.DYING;
+                    this.rocks.splice(i, 1);
+                    break;
+                }
+            }
         }
 
         static async loadLevel(levelName) {
@@ -2033,6 +2159,7 @@
         init() {
             Sprite.loadSpritesheet(async () => {
                 await Viewport.init();
+                await Screen.init();
                 await Sprite.init();
                 await Terrain.init();
                 Text.init();
@@ -2047,8 +2174,6 @@
                 this.roomsCleared = {};
                 this.shadowOffset = 0;
                 this.screenshakes = [];
-                this.player = new Player();
-                this.entities.push(this.player);
                 this.camera = { pos: { x: 0, y: 0 } };
                 this.cameraFocus = { pos: { x: 0, y: 0 } };
 
@@ -2230,6 +2355,8 @@
             if (this.field) {
                 this.field.draw();
             }
+
+            Screen.drawToViewport();
 
             return;
 

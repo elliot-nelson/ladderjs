@@ -12,6 +12,7 @@ const rollup            = require('rollup');
 const AsepriteCli       = require('./tools/aseprite-cli');
 const ImageDataParser   = require('./tools/image-data-parser');
 const MapDataParser     = require('./tools/map-data-parser');
+const LevelDataParser   = require('./tools/level-data-parser');
 
 // -----------------------------------------------------------------------------
 // Gulp Plugins
@@ -197,14 +198,13 @@ async function generateMapData() {
     await MapDataParser.parse(data, output);
 }
 
+async function generateLevelData() {
+    LevelDataParser.parse('src/levels/*.txt', 'src/js/Levels-gen.js');
+}
+
 function copyFinalSprites() {
     return gulp.src('dist/temp/sprites.png')
         .pipe(gulp.dest('dist/final'));
-}
-
-function copyLevels() {
-    return gulp.src('src/levels/*.txt')
-        .pipe(gulp.dest('dist/build/levels'));
 }
 
 const buildAssets = gulp.series(
@@ -214,8 +214,8 @@ const buildAssets = gulp.series(
     //pngoutAssets,
     generateSpriteSheetData,
     //generateMapData,
-    copyFinalSprites,
-    copyLevels
+    generateLevelData,
+    copyFinalSprites
 );
 
 // -----------------------------------------------------------------------------
@@ -282,10 +282,10 @@ const build = gulp.series(
 function watch() {
     watching = true;
 
-    let server = require('http-server').createServer({ root: 'dist/build' });
+    /*let server = require('http-server').createServer({ root: 'dist/build' });
     server.listen(8080, '0.0.0.0', () => {
         console.log(1);
-    });
+    });*/
 
     // The watch task watches for any file changes in the src/ folder, _except_ for
     // edits to generated files (called blah-gen by convention).
