@@ -41,7 +41,7 @@ export class Game {
             this.camera = { pos: { x: 0, y: 0 } };
             this.cameraFocus = { pos: { x: 0, y: 0 } };
 
-            this.field = new Field('EasyStreet');
+            this.field = new Field('Easy Street');
             await this.field.init();
 
             window.addEventListener('blur', () => this.pause());
@@ -385,7 +385,7 @@ export class Game {
     async nextLevel() {
         this.field = undefined;
 
-        let nextField = new Field('EasyStreet');
+        let nextField = new Field('Easy Street');
         await nextField.init();
         this.field = nextField;
     }

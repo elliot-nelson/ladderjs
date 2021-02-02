@@ -6,7 +6,7 @@
  * then add the name of your new level in the level order list below.
  */
 
- export const LevelOrder = [
+export const LevelOrder = [
     'Easy Street',
     'Long Island',
     'Ghost Town'
