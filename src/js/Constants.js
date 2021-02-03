@@ -31,3 +31,10 @@ export const LEVEL_COLS = 79;
 
 // Play speeds, expressed as frames per second. Each number is evenly divisible into 1000ms.
 export const PLAY_SPEEDS = [10, 20, 40, 76, 142];
+
+// Playable levels (see `Levels-gen.js` for the level data)
+export const LEVEL_ORDER = [
+    'Easy Street',
+    'Long Island',
+    'Ghost Town'
+];

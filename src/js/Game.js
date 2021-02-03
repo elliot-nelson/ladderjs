@@ -11,10 +11,10 @@ import { Movement } from './systems/Movement';
 import { Victory } from './systems/Victory';
 import { Hud } from './Hud';
 import { ScreenShake } from './ScreenShake';
-import { World } from './World';
 import { Terrain } from './Terrain';
 import { Field } from './Field';
 import { Screen } from './Screen';
+import { MainMenu } from './MainMenu';
 
 /**
  * Game state.
@@ -30,7 +30,6 @@ export class Game {
             Hud.init();
             Input.init();
             Audio.init();
-            World.init();
 
             this.entities = [];
             this.dialogPending = {};
@@ -40,9 +39,6 @@ export class Game {
             this.screenshakes = [];
             this.camera = { pos: { x: 0, y: 0 } };
             this.cameraFocus = { pos: { x: 0, y: 0 } };
-
-            this.field = new Field('Easy Street');
-            await this.field.init();
 
             window.addEventListener('blur', () => this.pause());
             window.addEventListener('focus', () => this.unpause());
@@ -55,6 +51,9 @@ export class Game {
         this.fps = 20;
         this.frame = 0;
         this.frameTimes = [];
+
+        this.menu = new MainMenu();
+
         this.update();
         window.requestAnimationFrame((delta) => this.onFrame(delta));
     }
@@ -91,28 +90,28 @@ export class Game {
 
         // Behavior (AI, player input, etc.)
         //perform(this.entities); <-- cut to save space
-        for (let entity of game.entities) {
-            if (entity.think) entity.think();
-        }
 
         // perform any queued damage
         //Damage.perform(this.entities);
 
         // Movement (perform entity velocities to position)
-        Movement.perform(this.entities);
 
         // Dialog scheduling
         //DialogScheduling.perform();
 
         // Victory conditions
-        Victory.perform();
 
-        if (this.field) {
-            this.field.update();
+        if (this.menu) {
+            this.menu.update();
         }
 
+        /*    if (!this.session) {
+            this.session = new Session();
+        }*/
+
+        if (this.session) this.session.update();
+
         // Culling (typically when an entity dies)
-        this.entities = this.entities.filter(entity => !entity.cull);
 
         // Camera logic
         /*let diff = {
@@ -154,71 +153,8 @@ export class Game {
 
         Viewport.ctx.translate((Viewport.width - GAME_WIDTH) / 2 | 0, (Viewport.height - GAME_HEIGHT) / 2 | 0);
 
-        //Viewport.ctx.fillStyle = 'black';
-        //Viewport.ctx.fillRect(-Viewport.width, -Viewport.height, Viewport.width * 2, Viewport.height * 2);
-
-        //Viewport.ctx.fillStyle = 'black';
-        //Viewport.ctx.font = '32px East Sea Dokdo';
-        //Viewport.ctx.fillText('harold is heavy', 50, 50);
-
-        World.draw();
-
-        //Viewport.ctx.fillStyle = 'black';
-        //Viewport.ctx.fillRect(-100, 1, 200, 200);
-
-        //this.board.draw();
-
-        //Hud.draw();
-
-        for (let entity of game.entities) {
-            entity.draw();
-        }
-
-//        Maze.draw();
-        Viewport.ctx.font = '16px \'DejaVu Sans Mono\'';
-        Viewport.ctx.fillStyle = 'black';
-        Viewport.ctx.fillText('hello ┘┘ ┙┛ ├ ┘ ', 10, 10);
-
-        let screen = [
-            '00' + '*'.repeat(78),
-            '01' + '.'.repeat(78),
-            '02 Hey everybody, give me my part people. HP 80     / ATTACK DRAGON',
-            '03 ===== ..... .....',
-            '04 ...a┘a┘.................',
-            '05 ........................',
-            '06 ......|...+++......@....',
-            '07 ......|.................',
-            '08 ......\\---....$.........',
-            '09 ........................',
-            '10' + '='.repeat(70),
-            '11',
-            '12' + String(Math.random()),
-            '13',
-            '14',
-            '15' + (' '.repeat(game.frame % 60)) + '@',
-            '16',
-            '17',
-            '18   ' + this.fps,
-            '19',
-            '20',
-            '21',
-            '22',
-            '23',
-            '24'
-        ].join('\n');
-/*
-        screen = '04 ...a┘a┘.................';
-
-        screen = [
-            '─│┌┐└┘├┤┬┴┼',
-            '═║╔╗╚╝╠╣╦╩╬'
-        ].join('\n');*/
-
-        //Text.drawText(Viewport.ctx, Text.splitParagraph(screen, Viewport.width), 0, 0, 1, Text.terminal, Text.terminal_shadow);
-
-        if (this.field) {
-            this.field.draw();
-        }
+        if (this.session) this.session.draw();
+        if (this.menu) this.menu.draw();
 
         Screen.drawToViewport();
 
@@ -380,14 +316,6 @@ export class Game {
         } else {
             this.gridHovered = undefined;
         }
-    }
-
-    async nextLevel() {
-        this.field = undefined;
-
-        let nextField = new Field('Easy Street');
-        await nextField.init();
-        this.field = nextField;
     }
 }
 

@@ -19,13 +19,11 @@ export const Screen = {
         }
     },
 
-    write(text, x, y) {
+    write(x, y, text) {
         if (!Array.isArray(text)) text = [text];
 
-        console.log(text, x, y);
         for (let j = 0; j < text.length; j++) {
             for (let i = 0; i < text[j].length; i++) {
-                //console.log(text[j][i], y + j, x + i);
                 this.screen[y + j][x + i] = text[j][i];
             }
         }

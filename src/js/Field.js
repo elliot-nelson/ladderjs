@@ -16,45 +16,40 @@ import { Levels } from './Levels-gen';
  */
 export class Field {
     constructor(levelName) {
-        this.levelName = levelName;
-    }
-
-    async init() {
         let level = Field.loadLevel(this.levelName);
 
+        this.levelName = levelName;
         this.layout = level.layout;
         this.dispensers = level.dispensers;
+        this.time = level.time;
+        this.maxRocks = level.rocks;
         this.rocks = [];
-        this.eaters = level.eaters;
-        console.log(level.player);
         this.player = new Player(level.player.x, level.player.y);
-
-        this.score = 0;
     }
 
-    update() {
+    update(session) {
         // Move player based on user input
         this.player.update(this);
         console.log(['updated', this.player.x, this.player.y]);
 
         // Check if player should be dead (before moving rocks)
-        this.checkIfPlayerShouldDie();
+        this.checkIfPlayerShouldDie(session);
 
         // Move rocks
         for (let rock of this.rocks) rock.update(this);
 
         // Check if player should be dead (after moving rocks)
-        this.checkIfPlayerShouldDie();
+        this.checkIfPlayerShouldDie(session);
 
         // Collect statues
         if (this.isStatue(this.player.x, this.player.y)) {
             this.layout[this.player.y][this.player.x] = ' ';
-            this.score += 1000;
+            session.score += 1000;
         }
 
         // Collect treasure (ends the current level)
         if (this.isTreasure(this.player.x, this.player.y)) {
-            game.nextLevel();
+            session.startNextLevel();
         }
 
         // Dispense new rocks
@@ -68,7 +63,7 @@ export class Field {
 
         // Kill player
         if (this.player.state === State.DEAD) {
-            game.nextLevel();
+            session.restartLevel();
         }
     }
 
@@ -129,7 +124,7 @@ export class Field {
         return ['H', '&', '$', ' ', '^', '.'].includes(this.layout[y][x]);
     }
 
-    checkIfPlayerShouldDie() {
+    checkIfPlayerShouldDie(session) {
         if (this.player.state === State.DYING || this.player.state === State.DEAD) return;
 
         if (this.isFire(this.player.x, this.player.y)) {
@@ -137,10 +132,16 @@ export class Field {
         }
 
         for (let i = 0; i < this.rocks.length; i++) {
-            if (this.player.x === this.rocks[i].x && this.player.y === this.rocks[i].y) {
-                this.player.state = State.DYING;
-                this.rocks.splice(i, 1);
-                break;
+            if (this.player.x === this.rocks[i].x) {
+                if (this.player.y === this.rocks[i].y) {
+                    this.player.state = State.DYING;
+                    this.rocks.splice(i, 1);
+                    break;
+                } else if (this.player.y === this.rocks[i].y - 1 && this.emptySpace(this.player.x, this.player.y + 1)) {
+                    session.updateScore(SCORE_ROCK);
+                } else if (this.player.y === this.rocks[i].y - 2 && this.emptySpace(this.player.x, this.player.y + 1) && this.emptySpace(this.player.x, this.player.y + 2)) {
+                    session.updateScore(SCORE_ROCK);
+                }
             }
         }
     }

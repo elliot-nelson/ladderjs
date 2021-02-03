@@ -12,7 +12,8 @@ import { Viewport } from './Viewport';
 // box drawing characters, etc.
 const SUPPORTED_UNICODE_CHARS = [
     '─│┌┐└┘├┤┬┴┼╳╳╳╳╳',
-    '═║╔╗╚╝╠╣╦╩╬╳╳╳╳╳'
+    '═║╔╗╚╝╠╣╦╩╬╳╳╳╳╳',
+    '↑↓←→╳╳╳╳╳╳╳╳╳╳╳╳'
 ].join('');
 
 const UNICODE_CHAR_MAP = SUPPORTED_UNICODE_CHARS.split('').reduce((map, char, idx) => {
