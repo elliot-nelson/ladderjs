@@ -61,6 +61,8 @@ export const Input = {
         // is false, it represents how long the input was last held down.
         this.framesHeld = {};
 
+        this.buffer = [];
+
         KeyboardAdapter.init();
         MouseAdapter.init();
         //GamepadAdapter.init();
@@ -94,6 +96,17 @@ export const Input = {
         this.pointer = MouseAdapter.pointer;
         this.direction = KeyboardAdapter.direction;
         //this.direction = this.gamepad.direction.m > 0 ? this.gamepad.direction : this.keyboard.direction;
+
+        let now = new Date().getTime();
+        this.buffer = this.buffer.filter(entry => entry.at > now - 3000);
+    },
+
+    lastKeyPressed() {
+        return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].key : '';
+    },
+
+    consume() {
+        this.buffer = [];
     },
 
     onDown(action) {},

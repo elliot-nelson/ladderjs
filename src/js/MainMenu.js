@@ -1,16 +1,32 @@
 import { Screen } from './Screen';
+import { game } from './Game';
+import { PLAY_SPEEDS } from './Constants';
+import { Input } from './input/Input';
 
 export class MainMenu {
     constructor() {
     }
 
     update() {
+        switch (Input.lastKeyPressed().toUpperCase()) {
+            case 'L':
+                Input.consume();
+                game.playSpeed = (game.playSpeed + 1) % PLAY_SPEEDS.length;
+                break;
+            case 'I':
+                Input.consume();
+                game.showInstructions();
+                break;
+            case 'E':
+                Input.consume();
+                game.showInstructions();
+                break;
+        }
     }
 
     draw() {
         let version = '?';
         let terminal = '?';
-        let speed = '?';
 
         let highScores = [
             `1) 6000  Bob`,
@@ -20,6 +36,7 @@ export class MainMenu {
             ``
         ];
 
+        Screen.clear();
         Screen.write(0, 0, [
             `               LL                     dd       dd`,
             `               LL                     dd       dd                      tm`,
@@ -31,11 +48,9 @@ export class MainMenu {
             ``,
             `                                       Version:    ${version}`,
             `(c) 1982, 1983 Yahoo Software          Terminal:   ${terminal}`,
-            `10970 Ashton Ave.  Suite 312           Play speed: ${speed}`,
+            `10970 Ashton Ave.  Suite 312           Play speed: ${game.playSpeed + 1} / ${PLAY_SPEEDS.length}`,
             `Los Angeles, Ca  90024                 Move = ↑↓←→/WASD, Jump = Space,`,
             `                                       Stop = Other`,
-            `                                       `,
-            ``,
             ``,
             `P = Play game                          High Scores`,
             `L = Change level of difficulty         ${highScores[0]}`,

@@ -49,9 +49,11 @@ export const KeyboardAdapter = {
             // Debugging - key presses
             // console.log(event.key, event.keyCode, event.code, k);
             console.log(event.code);
+            console.log(event);
             if (k) {
                 KeyboardAdapter.held[k] = true;
             }
+            Input.buffer.push({ key: event.key, at: new Date().getTime() });
         });
 
         window.addEventListener('keyup', event => {

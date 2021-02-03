@@ -15,6 +15,7 @@ import { Terrain } from './Terrain';
 import { Field } from './Field';
 import { Screen } from './Screen';
 import { MainMenu } from './MainMenu';
+import { InstructionsMenu } from './InstructionsMenu';
 
 /**
  * Game state.
@@ -53,6 +54,8 @@ export class Game {
         this.frameTimes = [];
 
         this.menu = new MainMenu();
+
+        this.playSpeed = 0;
 
         this.update();
         window.requestAnimationFrame((delta) => this.onFrame(delta));
@@ -316,6 +319,16 @@ export class Game {
         } else {
             this.gridHovered = undefined;
         }
+    }
+
+    showMainMenu() {
+        this.menu = new MainMenu();
+        this.session = undefined;
+    }
+
+    showInstructions() {
+        this.menu = new InstructionsMenu();
+        this.session = undefined;
     }
 }
 
