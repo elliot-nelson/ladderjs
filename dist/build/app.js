@@ -22,10 +22,6 @@
     const CHAR_HEIGHT = 16;
     const CHARSHEET_WIDTH = 16 * CHAR_WIDTH;
 
-    // Game constants, copied from the original game
-    const LEVEL_ROWS = 20;
-    const LEVEL_COLS = 79;
-
     /**
      * Viewport
      *
@@ -175,7 +171,7 @@
       tree4: [ [ 226, 448, 27, 11 ] ],
       treeplatform1: [ [ 245, 459, 9, 5 ] ],
       base64:
-       'data:image/png;base64,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' };
+       'data:image/png;base64,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' };
     /* </generated> */
 
     const Terrain = {
@@ -800,7 +796,8 @@
     // box drawing characters, etc.
     const SUPPORTED_UNICODE_CHARS = [
         '─│┌┐└┘├┤┬┴┼╳╳╳╳╳',
-        '═║╔╗╚╝╠╣╦╩╬╳╳╳╳╳'
+        '═║╔╗╚╝╠╣╦╩╬╳╳╳╳╳',
+        '↑↓←→╳╳╳╳╳╳╳╳╳╳╳╳'
     ].join('');
 
     const UNICODE_CHAR_MAP = SUPPORTED_UNICODE_CHARS.split('').reduce((map, char, idx) => {
@@ -942,251 +939,6 @@
         canvas.ctx.drawImage(font, 0, 0);
         return canvas.canvas;
     }
-
-    /**
-     * Movement
-     */
-    const Movement = {
-        perform() {
-        }
-
-        /*
-        perform(entities) {
-            // Movement only applies to active entities with positions and velocities
-            let movers = entities.filter(
-                entity => entity.pos && entity.vel && !entity.cull
-            );
-
-            for (let i = 0; i < movers.length; i++) {
-                let mover = movers[i];
-                mover.pos.x += mover.vel.x;
-                mover.pos.y += mover.vel.y;
-
-                let bounds = [
-                    { x: mover.pos.x + mover.bbox[0].x, y: mover.pos.y + mover.bbox[0].y },
-                    { x: mover.pos.x + mover.bbox[1].x, y: mover.pos.y + mover.bbox[1].y }
-                ];
-
-                for (let terrain of World.terrain) {
-                    let floors = Terrain.objects[terrain.t].floors.map(floor =>
-                        floor.map(p => ({ x: p.x + terrain.x, y: p.y + terrain.y }))
-                    );
-                    for (let floor of floors) {
-                        if (intersectRectangles(bounds, floor)) {
-                            mover.pos.y = floor[1].y + mover.bbox[0].y;
-                        }
-                    }
-                }
-            }
-
-            /*for (let i = 0; i < movers.length; i++) {
-                let mover = movers[i];
-
-                let movingBounds = [
-                    {
-                        x: mover.pos.x - mover.bbox[0].x,
-                        y: mover.pos.y - mover.bbox[0].y
-                    },
-                    {
-                        x: mover.pos.x + mover.bbox[1].x + mover.vel.x,
-                        y: mover.pos.y + mover.bbox[1].y + mover.vel.y
-                    }
-                ];
-
-                console.log("===");
-                for (let terrain of World.terrain) {
-                    console.log("terrain");
-                    let floors = Terrain.objects[terrain.t].floors.map(floor => [
-                        { x: terrain.x + floor[0].x, y: terrain.y + floor[0].y },
-                        { x: terrain.x + floor[1].x, y: terrain.y + floor[1].y }
-                    ]);
-
-                    for (let floor of floors) {
-                        console.log("floor");
-                        if (intersectRectangles(movingBounds, floor)) {
-                            let diff = movingBounds[1].y - floor[0].y;
-                            console.log(diff, movingBounds[1].y, floor[0].y);
-                            mover.vel.y -= diff;
-                            console.log(mover.vel.y);
-
-                            movingBounds = [
-                                {
-                                    x: mover.pos.x - mover.bbox[0].x,
-                                    y: mover.pos.y - mover.bbox[0].y
-                                },
-                                {
-                                    x: mover.pos.x + mover.bbox[1].x + mover.vel.x,
-                                    y: mover.pos.y + mover.bbox[1].y + mover.vel.y
-                                }
-                            ];
-                            console.log(movingBounds);
-                        }
-                    }
-                }
-                console.log("===");
-
-                mover.pos.x += mover.vel.x;
-                mover.pos.y += mover.vel.y;
-
-
-            }
-
-            return;
-            // Very basic "rounds" of collision resolution, since we have no real physics.
-            // (As usual, "detecting" a collision is not the hard part... we need to resolve
-            // them too!)
-            for (let rounds = 0; rounds < 5; rounds++) {
-                // Each pair of entities only needs to interact once.
-                for (let i = 0; i < movers.length - 1; i++) {
-                    for (let j = i + 1; j < movers.length; j++) {
-                        Movement.clipVelocityEntityVsEntity(movers[i], movers[j]);
-                    }
-                }
-
-                for (let entity of movers) {
-                    Movement.clipVelocityAgainstWalls(entity);
-                }
-            }
-
-            // Now we perform all movement, even if it's not going to be perfect.
-            for (let entity of movers) {
-                entity.pos.x += entity.vel.x;
-                entity.pos.y += entity.vel.y;
-            }
-        },
-
-        clipVelocityEntityVsEntity(entity, other) {
-            if (entity.noClipEntity || other.noClipEntity) return;
-
-            let hit = intersectCircleCircle(
-                entity.pos,
-                entity.radius,
-                entity.vel,
-                other.pos,
-                other.radius,
-                other.vel
-            );
-            if (hit) {
-                if (entity.bounce && other.bounce) {
-                    entity.vel.x = -hit.nx * hit.m;
-                    entity.vel.y = -hit.ny * hit.m;
-                    other.vel.x = hit.nx * hit.m;
-                    other.vel.y = hit.ny * hit.m;
-                } else {
-                    // Not a bug: we "add" the mass of the opposing entity to our own velocity when deciding who
-                    // is at fault for the collision. Entity velocities adjust in relation to their fault level.
-                    let entityM = normalizeVector(entity.vel).m + other.mass,
-                        otherM = normalizeVector(other.vel).m + entity.mass,
-                        entityI = entity.bounce ? 0.1 : 1,
-                        otherI = other.bounce ? 0.1 : 1;
-                    entity.vel.x -=
-                        (hit.nx * hit.m * entityI * entityM) / (entityM + otherM);
-                    entity.vel.y -=
-                        (hit.ny * hit.m * entityI * entityM) / (entityM + otherM);
-                    other.vel.x +=
-                        (hit.nx * hit.m * otherI * otherM) / (entityM + otherM);
-                    other.vel.y +=
-                        (hit.ny * hit.m * otherI * otherM) / (entityM + otherM);
-                }
-            }
-        },
-
-        clipVelocityAgainstWalls(entity) {
-            if (entity.noClipWall) return;
-
-            for (let tile of tilesHitByCircle(
-                entity.pos,
-                entity.vel,
-                entity.radius
-            )) {
-                if (!tileIsPassable(tile.q, tile.r)) {
-                    let bounds = [
-                        qr2xy(tile),
-                        qr2xy({ q: tile.q + 1, r: tile.r + 1 })
-                    ];
-                    let hit = intersectCircleRectangle(
-                        entity.pos,
-                        {
-                            x: entity.pos.x + entity.vel.x,
-                            y: entity.pos.y + entity.vel.y
-                        },
-                        entity.radius,
-                        bounds
-                    );
-
-                    // The "math" part of detecting collision with walls is buried in the geometry functions
-                    // above, but it's not the whole story -- if we do detect a collision, we still need to
-                    // decide what to do about it.
-                    //
-                    // If the normal vector is horizontal or vertical, we zero out the portion of the vector
-                    // moving into the wall, allowing frictionless sliding (if we wanted to perform friction,
-                    // we could also reduce the other axis slightly).
-                    //
-                    // If the normal vector is not 90*, we "back up" off the wall by exactly the normal vector.
-                    // If the player runs into a corner at EXACTLY a 45 degree angle, they will simply "stick"
-                    // on it -- but one degree left or right and they'll slide around the corner onto the wall,
-                    // which is the desired result.
-                    if (hit) {
-                        if (entity.bounce) {
-                            if (hit.nx === 0) {
-                                entity.vel.y = -entity.vel.y;
-                            } else if (hit.ny === 0) {
-                                entity.vel.x = -entity.vel.x;
-                            } else {
-                                entity.vel.x += hit.nx;
-                                entity.vel.y += hit.ny;
-                            }
-                        } else {
-                            if (hit.nx === 0) {
-                                entity.vel.y = hit.y - entity.pos.y;
-                            } else if (hit.ny === 0) {
-                                entity.vel.x = hit.x - entity.pos.x;
-                            } else {
-                                entity.vel.x += hit.nx;
-                                entity.vel.y += hit.ny;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        */
-    };
-
-    /**
-     * Victory
-     */
-    const Victory = {
-        perform() {
-            /*if (game.player.pages >= 404 && !game.victory) {
-                Victory.frame = 0;
-                game.victory = true;
-                game.player.pos = roomCenter(game.maze.rooms[ROOM_ENDING]);
-                game.brawl = false;
-                let enemies = game.entities.filter(entity => entity.enemy);
-                for (let enemy of enemies) {
-                    enemy.state = DEAD;
-                }
-                Audio.play(Audio.victory);
-            } else if (game.victory) {
-                Victory.frame++;
-
-                if (Victory.frame === 10) {
-                    game.entities.push(new SpawnAnimation(game.player.pos));
-                    game.screenshakes.push(new ScreenShake(20, 20, 90));
-                }
-
-                let enemies = game.entities.filter(entity => entity.enemy);
-                if (Victory.frame % 30 === 0 && enemies.length < 25) {
-                    let pos = vectorAdd(game.player.pos, angle2vector(Math.random() * R360, 48));
-                    let enemyType = [Stabguts, Stabguts, Spindoctor][Math.random() * 3 | 0];
-                    let enemy = new enemyType(pos);
-                    game.entities.push(enemy);
-                    game.entities.push(new SpawnAnimation(pos));
-                }
-            }*/
-        }
-    };
 
     /**
      * Hud
@@ -1496,273 +1248,6 @@
         }
     }
 
-    const World = {
-        init() {
-            World.reset();
-        },
-
-        reset() {
-            World.terrain = [
-                { t: 't_tree1', x: 0, y: 0 },
-                { t: 't_tree2', x: 50, y: 20 },
-                { t: 't_tree3', x: 100, y: -20 }
-            ];
-
-            World.entities = [];
-        },
-
-        think() {
-        },
-
-        draw() {
-            for (let terrain of World.terrain) {
-                Sprite.drawViewportSprite(Sprite.terrain[terrain.t], terrain);
-            }
-        }
-    };
-
-    // This is our list of STATES. Each entity starts out in one of these states and can move between
-    // them based on events that happen in the game. (Note that some of these are directions, but
-    // since an entity keeps moving in the direction it is going unless stopped, directions are
-    // states in this game.)
-    const State = {
-        STOPPED:    1,         // Standing still
-        UP:         2,         // Moving up (player only)
-        LEFT:       3,         // Moving left
-        DOWN:       4,         // Moving down
-        RIGHT:      5,         // Moving right
-        FALLING:    6,         // Falling
-        START_JUMP: 7,         // About to start a jump (player only)
-        JUMP_LEFT:  8,         // Jumping left (player only)
-        JUMP_RIGHT: 9,         // Jumping right (player only)
-        JUMP_UP:    10,        // Jumping straight up (player only)
-        DYING:      11,        // Dying (used as a death animation)
-        DEAD:       12         // Dead (for player, restart level; for rock, disappear)
-    };
-
-    const JUMP_FRAMES = {
-        [State.JUMP_RIGHT]: [
-            { x: 1, y: -1 },
-            { x: 1, y: -1 },
-            { x: 1, y: 0 },
-            { x: 1, y: 0 },
-            { x: 1, y: 1 },
-            { x: 1, y: 1 }
-        ],
-        [State.JUMP_LEFT]: [
-            { x: -1, y: -1 },
-            { x: -1, y: -1 },
-            { x: -1, y: 0 },
-            { x: -1, y: 0 },
-            { x: -1, y: 1 },
-            { x: -1, y: 1 }
-        ],
-        [State.JUMP_UP]: [
-            { x: 0, y: -1 },
-            { x: 0, y: -1 },
-            { x: 0, y: 0 },
-            { x: 0, y: 1 },
-            { x: 0, y: 1 },
-            { x: 0, y: 0 }
-        ],
-    };
-
-    class Entity {
-        applyMovement(field) {
-            let repeat = false;
-
-            // This method contains generic "movement" application for all entities, including
-            // Lad (player) and Der Rocks (enemies). Things like falling, moving left/right, etc.,
-            // work the same for both.
-            //
-            // (There's a bunch of jump logic in here too, and moving UP, which really only applies
-            // to players, but that's OK -- Der Rocks just won't attempt those actions.)
-
-            if (this.nextState) {
-                switch (this.state) {
-                    case State.STOPPED:
-                    case State.LEFT:
-                    case State.RIGHT:
-                        if ([State.LEFT, State.RIGHT, State.STOPPED].includes(this.nextState)) {
-                            this.state = this.nextState;
-                            this.nextState = undefined;
-                        }
-                        break;
-
-                    case State.UP:
-                    case State.DOWN:
-                        // Normal
-                        if ([State.LEFT, State.RIGHT].includes(this.nextState)) {
-                            this.state = this.nextState;
-                            this.nextState = undefined;
-                        }
-                        break;
-                }
-            }
-
-            if (this.nextState === State.START_JUMP) {
-                // Special case: the user wants to jump!
-                //
-                // If the player is standing on something solid, we initiate a jump based on the current
-                // movement of the player. If not, we (sort of) ignore the request to jump... although
-                // it does subtly change the behavior upon landing.
-                if (field.onSolid(this.x, this.y)) {
-                    if (this.state === State.STOPPED || this.state === State.FALLING) {
-                        this.state = State.JUMP_UP;
-                        this.jumpStep = 0;
-                        this.nextState = State.STOPPED;
-                    } else if (this.state === State.LEFT || this.state === State.JUMP_LEFT) {
-                        this.state = State.JUMP_LEFT;
-                        this.jumpStep = 0;
-                        this.nextState = State.LEFT;
-                    } else if (this.state === State.RIGHT || this.state === State.JUMP_RIGHT) {
-                        this.state = State.JUMP_RIGHT;
-                        this.jumpStep = 0;
-                        this.nextState = State.RIGHT;
-                    }
-                } else {
-                    if (this.state === State.JUMP_UP || this.state === State.FALLING) {
-                        this.nextState = State.STOPPED;
-                    } else if (this.state === State.JUMP_RIGHT) {
-                        this.nextState = State.RIGHT;
-                    } else if (this.state === State.JUMP_LEFT) {
-                        this.nextState = State.LEFT;
-                    }
-                }
-            } else if (this.nextState === State.UP && field.isLadder(this.x, this.y)) {
-                // Special case: the user wants to go up!
-                //
-                // If the user is on a ladder, we can start ascending. Note that if the user is not
-                // on a ladder we ignore their input, which is intentional -- this allows queued
-                // (pacman) input, where we can tap UP a little before reaching the ladder.
-                this.state = State.UP;
-                this.nextState = undefined;
-            } else if (this.nextState === State.DOWN && (field.isLadder(this.x, this.y) || field.isLadder(this.x, this.y + 1))) {
-                // Special case: the player wants to go down!
-                //
-                // If the player is on (or above) a ladder, we can start descending. Note that if the player is not
-                // on a ladder we ignore their input, which is intentional -- this allows queued
-                // (pacman) input, where we can tap DOWN a little before reaching the ladder.
-                this.state = State.DOWN;
-                this.nextState = undefined;
-            }
-
-            switch (this.state) {
-                case State.LEFT:
-                    if (!field.onSolid(this.x, this.y)) {
-                        this.nextState = State.LEFT;
-                        this.state = State.FALLING;
-                        repeat = true;
-                        break;
-                    }
-                    if (field.emptySpace(this.x - 1, this.y)) {
-                        this.x--;
-                    } else {
-                        this.nextState = State.STOPPED;
-                    }
-                    break;
-
-                case State.RIGHT:
-                    if (!field.onSolid(this.x, this.y)) {
-                        this.nextState = State.RIGHT;
-                        this.state = State.FALLING;
-                        repeat = true;
-                        break;
-                    }
-                    if (field.emptySpace(this.x + 1, this.y)) {
-                        this.x++;
-                    } else {
-                        this.nextState = State.STOPPED;
-                    }
-                    break;
-
-                case State.UP:
-                    if (field.canClimbUp(this.x, this.y - 1)) {
-                        this.y--;
-                    } else {
-                        this.state = State.STOPPED;
-                    }
-                    break;
-
-                case State.DOWN:
-                    if (field.canClimbDown(this.x, this.y + 1)) {
-                        this.y++;
-                    } else {
-                        this.state = State.STOPPED;
-                    }
-                    break;
-
-                case State.JUMP_RIGHT:
-                case State.JUMP_LEFT:
-                case State.JUMP_UP:
-                    let step = JUMP_FRAMES[this.state][this.jumpStep];
-                    if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
-                        let terrain = field.terrain[this.y + step.y][this.x + step.x];
-                        if (['=', '|', '-'].includes(terrain)) {
-                            if (field.onSolid(this.x, this.y)) {
-                                console.log('a');
-                                this.state = this.nextState;
-                                this.nextState = undefined;
-                            } else {
-                                console.log('b');
-                                switch (this.state) {
-                                    case State.JUMP_RIGHT:
-                                        this.nextState = State.RIGHT;
-                                        break;
-                                    case State.JUMP_LEFT:
-                                        this.nextState = State.LEFT;
-                                        break;
-                                    case State.JUMP_UP:
-                                        this.nextState = State.UP;
-                                        break;
-                                }
-                                this.state = State.FALLING;
-                            }
-                        } else if (terrain === 'H') {
-                                console.log('c');
-                            this.x += step.x;
-                            this.y += step.y;
-                            this.state = State.STOPPED;
-                            this.nextState = undefined;
-                        } else {
-                                console.log('d');
-                            this.x += step.x;
-                            this.y += step.y;
-                            this.jumpStep++;
-
-                            if (this.jumpStep >= JUMP_FRAMES[this.state].length) {
-                                this.state = this.nextState;
-                                this.nextState = undefined;
-                            }
-                        }
-                    } else {
-                                console.log('e');
-                        if (field.onSolid(this.x, this.y)) {
-                            this.state = this.nextState;
-                            this.nextState = undefined;
-                        } else {
-                            this.state = State.FALLING;
-                            this.nextState = State.STOPPED;
-                        }
-                    }
-                    break;
-
-                case State.FALLING:
-                    if (field.onSolid(this.x, this.y)) {
-                        this.state = this.nextState || State.STOPPED;
-                    } else {
-                        this.y++;
-                    }
-                    break;
-            }
-
-            // If we were attempting to move somewhere and realized we should be falling instead,
-            // we want to re-run the entire algorithm once. This avoids what boils down to a "skipped
-            // frame" from the user's point of view.
-            if (repeat) return this.applyMovement(field);
-        }
-    }
-
     const Screen = {
         init() {
             this.screen = [];
@@ -1780,13 +1265,11 @@
             }
         },
 
-        write(text, x, y) {
+        write(x, y, text) {
             if (!Array.isArray(text)) text = [text];
 
-            console.log(text, x, y);
             for (let j = 0; j < text.length; j++) {
                 for (let i = 0; i < text[j].length; i++) {
-                    //console.log(text[j][i], y + j, x + i);
                     this.screen[y + j][x + i] = text[j][i];
                 }
             }
@@ -1805,350 +1288,52 @@
         }
     };
 
-    const DEATH_FRAMES = ['p', 'b', 'd', 'q', 'p', 'b', 'd', 'q', '-', '-', '_'];
-
-    /**
-     * Player
-     */
-    class Player extends Entity {
-        constructor(x, y) {
-            super();
-            this.x = x;
-            this.y = y;
-            this.state = State.STOPPED;
-            this.nextState = State.STOPPED;
-            this.jumpStep = 0;
-            this.deathStep = 0;
-            console.log('player constructed', x, y);
-        }
-
-        update(field) {
-            if (this.state === State.DYING) {
-                this.deathStep++;
-                if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
-            }
-
-            if (this.state === State.DYING || this.state === State.DEAD) return;
-
-            if (Input.pressed[Input.Action.LEFT]) {
-                this.nextState = State.LEFT;
-            }
-
-            if (Input.pressed[Input.Action.RIGHT]) {
-                this.nextState = State.RIGHT;
-            }
-
-            if (Input.pressed[Input.Action.UP]) {
-                this.nextState = State.UP;
-            }
-
-            if (Input.pressed[Input.Action.DOWN]) {
-                this.nextState = State.DOWN;
-            }
-
-            if (Input.pressed[Input.Action.JUMP]) {
-                this.nextState = State.START_JUMP;
-            }
-
-            console.log(this.x, this.y);
-            return this.applyMovement(field);
-        }
-
-        draw() {
-            let char = 'g';
-
-            switch (this.state) {
-                case State.RIGHT:
-                case State.JUMP_RIGHT:
-                case State.UP:
-                case State.DOWN:
-                    char = 'p';
-                    break;
-
-                case State.LEFT:
-                case State.JUMP_LEFT:
-                    char = 'q';
-                    break;
-
-                case State.FALLING:
-                    char = 'b';
-                    break;
-
-                case State.DYING:
-                    char = DEATH_FRAMES[this.deathStep];
-                    break;
-
-                case State.DEAD:
-                    char = '_';
-                    break;
-            }
-
-            console.log(this.x, this.y);
-            Screen.write(char, this.x, this.y);
-        }
-    }
-
-    const DEATH_FRAMES$1 = ['%', ':'];
-
-    class Rock extends Entity {
-        constructor(dispenser) {
-            super();
-            this.x = dispenser.x;
-            this.y = dispenser.y + 1;
-            this.state = State.FALLING;
-            this.nextState = undefined;
-            this.deathStep = 0;
-        }
-
-        update(field) {
-            if (this.state === State.DYING) {
-                this.deathStep++;
-                if (this.deathStep >= DEATH_FRAMES$1.length) this.state = State.DEAD;
-            }
-
-            if (this.state === State.DYING || this.state === State.DEAD) return;
-
-            if (this.state === State.STOPPED) {
-                if (this.x === 0 || !field.emptySpace(this.x - 1, this.y)) {
-                    this.nextState = State.RIGHT;
-                } else if (this.x === LEVEL_COLS - 1 || !field.emptySpace(this.x + 1, this.y)) {
-                    this.nextState = State.LEFT;
-                } else {
-                    this.nextState = Math.random() > 0.5 ? State.LEFT : State.RIGHT;
-                }
-            }
-
-            if (this.x === 0 && this.state === State.LEFT) {
-                this.state = State.RIGHT;
-            }
-
-            if (this.x === LEVEL_COLS - 1 && this.state === State.RIGHT) {
-                this.state = State.LEFT;
-            }
-
-            if (this.state !== State.FALLING && !field.onSolid(this.x, this.y)) {
-                this.nextState = State.FALLING;
-            }
-
-            if (field.isLadder(this.x, this.y + 1) && [State.LEFT, State.RIGHT].includes(this.state)) {
-                let r = Math.floor(Math.random() * 4);
-                this.nextState = [State.LEFT, State.RIGHT, State.DOWN, State.DOWN][r];
-            }
-
-            if (field.isEater(this.x, this.y)) {
-                this.state = State.DYING;
-                return;
-            }
-
-            this.applyMovement(field);
-        }
-
-        draw() {
-            let char = 'o';
-
-            switch (this.state) {
-                case State.DYING:
-                    char = DEATH_FRAMES$1[this.deathStep];
-                    break;
-                case State.DEAD:
-                    return;
-            }
-
-            Screen.write(char, this.x, this.y);
-        }
-    }
-
-    /**
-     * Field
-     *
-     * The "field" represents the current level, or, "playing field". A new playing field is created
-     * every time you start a level, so we attach everything about the currently played level to
-     * the field -- positions of treasure, the player, victory conditions, etc.
-     */
-    class Field {
-        constructor(levelName) {
-            this.levelName = levelName;
-        }
-
-        async init() {
-            let level = await Field.loadLevel(this.levelName);
-
-            this.terrain = level.terrain;
-            this.dispensers = level.dispensers;
-            this.rocks = [];
-            this.eaters = level.eaters;
-            console.log(level.player);
-            this.player = new Player(level.player.x, level.player.y);
-
-            this.score = 0;
+    class MainMenu {
+        constructor() {
         }
 
         update() {
-            // Move player based on user input
-            this.player.update(this);
-            console.log(['updated', this.player.x, this.player.y]);
-
-            // Check if player should be dead (before moving rocks)
-            this.checkIfPlayerShouldDie();
-
-            // Move rocks
-            for (let rock of this.rocks) rock.update(this);
-
-            // Check if player should be dead (after moving rocks)
-            this.checkIfPlayerShouldDie();
-
-            // Collect statues
-            if (this.isStatue(this.player.x, this.player.y)) {
-                this.terrain[this.player.y][this.player.x] = ' ';
-                this.score += 1000;
-            }
-
-            // Collect treasure (ends the current level)
-            if (this.isTreasure(this.player.x, this.player.y)) {
-                game.nextLevel();
-            }
-
-            // Dispense new rocks
-            if (this.rocks.length < 3 && Math.random() > 0.9) {
-                let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
-                this.rocks.push(new Rock(dispenser));
-            }
-
-            // Kill dead rocks
-            this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
-
-            // Kill player
-            if (this.player.state === State.DEAD) {
-                game.nextLevel();
-            }
         }
 
         draw() {
-            Screen.clear();
+            let version = '?';
+            let terminal = '?';
+            let speed = '?';
 
-            // Draw terrain
-            Screen.write(this.terrain.map(row => row.join('')), 0, 0);
+            let highScores = [
+                `1) 6000  Bob`,
+                `2) 6000  Tom`,
+                `3) 4000  Wayne`,
+                ``,
+                ``
+            ];
 
-            this.player.draw();
-
-            this.rocks.forEach(rock => rock.draw());
-
-            // Score
-            Screen.write(String(this.score), 0, 21);
-
-            // Lives
-            Screen.write(String(4), 8, 21);
-        }
-
-        onSolid(x, y) {
-            return ['=', '-', 'H', '|'].includes(this.terrain[y + 1][x]) || this.terrain[y][x] === 'H';
-        }
-
-        emptySpace(x, y) {
-            if (x < 0 || x > LEVEL_COLS) {
-                return true;
-            } else {
-                return !(this.terrain[y][x] in ['|', '=']);
-            }
-        }
-
-        isLadder(x, y) {
-            return this.terrain[y][x] === 'H';
-        }
-
-        isStatue(x, y) {
-            return this.terrain[y][x] === '&';
-        }
-
-        isTreasure(x, y) {
-            return this.terrain[y][x] === '$';
-        }
-
-        isEater(x, y) {
-            return this.terrain[y][x] === '*';
-        }
-
-        isFire(x, y) {
-            return this.terrain[y][x] === '^';
-        }
-
-        canClimbUp(x, y) {
-            return ['H', '&', '$'].includes(this.terrain[y][x]);
-        }
-
-        canClimbDown(x, y) {
-            return ['H', '&', '$', ' ', '^', '.'].includes(this.terrain[y][x]);
-        }
-
-        checkIfPlayerShouldDie() {
-            if (this.player.state === State.DYING || this.player.state === State.DEAD) return;
-
-            if (this.isFire(this.player.x, this.player.y)) {
-                this.player.state = State.DYING;
-            }
-
-            for (let i = 0; i < this.rocks.length; i++) {
-                if (this.player.x === this.rocks[i].x && this.player.y === this.rocks[i].y) {
-                    this.player.state = State.DYING;
-                    this.rocks.splice(i, 1);
-                    break;
-                }
-            }
-        }
-
-        static async loadLevel(levelName) {
-            let text = await (await fetch(`levels/${levelName}.txt`)).text();
-
-            let terrain = text.split('\n').map(row => row.split(''));
-            let dispensers = [];
-            let eaters = [];
-            let player;
-
-            // Sanity check
-            terrain = terrain.slice(0, LEVEL_ROWS);
-
-            for (let y = 0; y < LEVEL_ROWS; y++) {
-                // Sanity checks
-                if (!terrain[y]) terrain[y] = [];
-                terrain[y] = terrain[y].slice(0, LEVEL_COLS);
-
-                for (let x = 0; x < LEVEL_COLS; x++) {
-                    // Sanity check
-                    if (!terrain[y][x]) terrain[y][x] = ' ';
-
-                    // Der Dispensers (V) and Der Eaters (*) have behaviors, so it is convenient for us
-                    // to construct a list of them, but they are permanent parts of the terrain, so we can
-                    // leave them as part of the level and draw them normally.
-
-                    if (terrain[y][x] === 'V') {
-                        dispensers.push({ x, y });
-                    }
-
-                    if (terrain[y][x] === '*') {
-                        eaters.push({ x, y });
-                    }
-
-                    // Treasure ($), Statues (&), and the Lad (p) are transient - the player moves around and
-                    // can pick up the treasures and statues. That's why for these elements, we add them to
-                    // our lists AND we remove them from the "playing field", we'll draw them separately on
-                    // top of the terrain.
-
-                    if (terrain[y][x] === 'p') {
-                        terrain[y][x] = ' ';
-                        player = { x, y };
-                    }
-
-                    // Everything else, like floors (=), walls (|), ladders (H) and fire (^), is part of the
-                    // terrain. The Lad interacts with them, but we can handle that during our movement checks.
-                }
-            }
-
-            return {
-                terrain,
-                dispensers,
-                eaters,
-                player
-            };
+            Screen.write(0, 0, [
+                `               LL                     dd       dd`,
+                `               LL                     dd       dd                      tm`,
+                `               LL         aaaa     ddddd    ddddd    eeee   rrrrrrr`,
+                `               LL        aa  aa   dd  dd   dd  dd   ee  ee  rr    rr`,
+                `               LL        aa  aa   dd  dd   dd  dd   eeeeee  rr`,
+                `               LL        aa  aa   dd  dd   dd  dd   ee      rr`,
+                `               LLLLLLLL   aaa aa   ddd dd   ddd dd   eeee   rr`,
+                ``,
+                `                                       Version:    ${version}`,
+                `(c) 1982, 1983 Yahoo Software          Terminal:   ${terminal}`,
+                `10970 Ashton Ave.  Suite 312           Play speed: ${speed}`,
+                `Los Angeles, Ca  90024                 Move = ↑↓←→/WASD, Jump = Space,`,
+                `                                       Stop = Other`,
+                `                                       `,
+                ``,
+                ``,
+                `P = Play game                          High Scores`,
+                `L = Change level of difficulty         ${highScores[0]}`,
+                `C = Configure Ladder                   ${highScores[1]}`,
+                `I = Instructions                       ${highScores[2]}`,
+                `E = Exit Ladder                        ${highScores[3]}`,
+                `                                       ${highScores[4]}`,
+                ``,
+                `Enter one of the above:`
+            ]);
         }
     }
 
@@ -2166,7 +1351,6 @@
                 Hud.init();
                 Input.init();
                 Audio.init();
-                World.init();
 
                 this.entities = [];
                 this.dialogPending = {};
@@ -2176,9 +1360,6 @@
                 this.screenshakes = [];
                 this.camera = { pos: { x: 0, y: 0 } };
                 this.cameraFocus = { pos: { x: 0, y: 0 } };
-
-                this.field = new Field('EasyStreet');
-                await this.field.init();
 
                 window.addEventListener('blur', () => this.pause());
                 window.addEventListener('focus', () => this.unpause());
@@ -2191,6 +1372,9 @@
             this.fps = 20;
             this.frame = 0;
             this.frameTimes = [];
+
+            this.menu = new MainMenu();
+
             this.update();
             window.requestAnimationFrame((delta) => this.onFrame(delta));
         }
@@ -2227,28 +1411,28 @@
 
             // Behavior (AI, player input, etc.)
             //perform(this.entities); <-- cut to save space
-            for (let entity of game.entities) {
-                if (entity.think) entity.think();
-            }
 
             // perform any queued damage
             //Damage.perform(this.entities);
 
             // Movement (perform entity velocities to position)
-            Movement.perform(this.entities);
 
             // Dialog scheduling
             //DialogScheduling.perform();
 
             // Victory conditions
-            Victory.perform();
 
-            if (this.field) {
-                this.field.update();
+            if (this.menu) {
+                this.menu.update();
             }
 
+            /*    if (!this.session) {
+                this.session = new Session();
+            }*/
+
+            if (this.session) this.session.update();
+
             // Culling (typically when an entity dies)
-            this.entities = this.entities.filter(entity => !entity.cull);
 
             // Camera logic
             /*let diff = {
@@ -2290,71 +1474,8 @@
 
             Viewport.ctx.translate((Viewport.width - GAME_WIDTH) / 2 | 0, (Viewport.height - GAME_HEIGHT) / 2 | 0);
 
-            //Viewport.ctx.fillStyle = 'black';
-            //Viewport.ctx.fillRect(-Viewport.width, -Viewport.height, Viewport.width * 2, Viewport.height * 2);
-
-            //Viewport.ctx.fillStyle = 'black';
-            //Viewport.ctx.font = '32px East Sea Dokdo';
-            //Viewport.ctx.fillText('harold is heavy', 50, 50);
-
-            World.draw();
-
-            //Viewport.ctx.fillStyle = 'black';
-            //Viewport.ctx.fillRect(-100, 1, 200, 200);
-
-            //this.board.draw();
-
-            //Hud.draw();
-
-            for (let entity of game.entities) {
-                entity.draw();
-            }
-
-    //        Maze.draw();
-            Viewport.ctx.font = '16px \'DejaVu Sans Mono\'';
-            Viewport.ctx.fillStyle = 'black';
-            Viewport.ctx.fillText('hello ┘┘ ┙┛ ├ ┘ ', 10, 10);
-
-            let screen = [
-                '00' + '*'.repeat(78),
-                '01' + '.'.repeat(78),
-                '02 Hey everybody, give me my part people. HP 80     / ATTACK DRAGON',
-                '03 ===== ..... .....',
-                '04 ...a┘a┘.................',
-                '05 ........................',
-                '06 ......|...+++......@....',
-                '07 ......|.................',
-                '08 ......\\---....$.........',
-                '09 ........................',
-                '10' + '='.repeat(70),
-                '11',
-                '12' + String(Math.random()),
-                '13',
-                '14',
-                '15' + (' '.repeat(game.frame % 60)) + '@',
-                '16',
-                '17',
-                '18   ' + this.fps,
-                '19',
-                '20',
-                '21',
-                '22',
-                '23',
-                '24'
-            ].join('\n');
-    /*
-            screen = '04 ...a┘a┘.................';
-
-            screen = [
-                '─│┌┐└┘├┤┬┴┼',
-                '═║╔╗╚╝╠╣╦╩╬'
-            ].join('\n');*/
-
-            //Text.drawText(Viewport.ctx, Text.splitParagraph(screen, Viewport.width), 0, 0, 1, Text.terminal, Text.terminal_shadow);
-
-            if (this.field) {
-                this.field.draw();
-            }
+            if (this.session) this.session.draw();
+            if (this.menu) this.menu.draw();
 
             Screen.drawToViewport();
 
@@ -2438,14 +1559,6 @@
             } else {
                 this.gridHovered = undefined;
             }
-        }
-
-        async nextLevel() {
-            this.field = undefined;
-
-            let nextField = new Field('EasyStreet');
-            await nextField.init();
-            this.field = nextField;
         }
     }
 
