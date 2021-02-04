@@ -131,14 +131,12 @@ export class Entity {
             case State.JUMP_UP:
                 let step = JUMP_FRAMES[this.state][this.jumpStep];
                 if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
-                    let terrain = field.terrain[this.y + step.y][this.x + step.x];
+                    let terrain = field.layout[this.y + step.y][this.x + step.x];
                     if (['=', '|', '-'].includes(terrain)) {
                         if (field.onSolid(this.x, this.y)) {
-                            console.log('a');
                             this.state = this.nextState;
                             this.nextState = undefined;
                         } else {
-                            console.log('b');
                             switch (this.state) {
                                 case State.JUMP_RIGHT:
                                     this.nextState = State.RIGHT;
@@ -153,13 +151,11 @@ export class Entity {
                             this.state = State.FALLING;
                         }
                     } else if (terrain === 'H') {
-                            console.log('c');
                         this.x += step.x;
                         this.y += step.y;
                         this.state = State.STOPPED;
                         this.nextState = undefined;
                     } else {
-                            console.log('d');
                         this.x += step.x;
                         this.y += step.y;
                         this.jumpStep++;
@@ -170,7 +166,6 @@ export class Entity {
                         }
                     }
                 } else {
-                            console.log('e');
                     if (field.onSolid(this.x, this.y)) {
                         this.state = this.nextState;
                         this.nextState = undefined;

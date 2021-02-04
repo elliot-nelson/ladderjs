@@ -9,6 +9,10 @@ export class MainMenu {
 
     update() {
         switch (Input.lastKeyPressed().toUpperCase()) {
+            case 'P':
+                Input.consume();
+                game.startSession();
+                break;
             case 'L':
                 Input.consume();
                 game.playSpeed = (game.playSpeed + 1) % PLAY_SPEEDS.length;

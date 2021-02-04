@@ -1,8 +1,8 @@
 
-import { LEVEL_ORDER } from './Constants';
+import { LEVEL_ORDER, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from './Constants';
 import { Field } from './Field';
 import { Screen } from './Screen';
-import { sprintf } from 'sprintf-js';
+import { Input } from './input/Input';
 
 export class Session {
     constructor() {
@@ -19,17 +19,31 @@ export class Session {
         }
 
         this.field.update(this);
+
+        let recentKeystrokes = Input.buffer.map(event => event.key).join('').toUpperCase();
+
+        if (recentKeystrokes.match(/IDCLEV(\d\d)/)) {
+            Input.consume();
+            this.field = undefined;
+            this.levelNumber = parseInt(RegExp.$1, 10);
+        } else if (recentKeystrokes.includes("IDDQD")) {
+            Input.consume();
+            console.log("god mode");
+        }
     }
 
     draw() {
-        this.field.draw();
-        Screen.write(sprintf(
-            'Lads   %2d     Level   %2d     Score    %04d                 Bonus time    %4d',
-            this.lives,
-            this.levelNumber + 1,
-            this.score,
-            this.field.time
-        ));
+        Screen.clear();
+
+        if (this.field) this.field.draw();
+
+        let stat = [
+            String(this.lives).padStart(2, ' '),
+            String(this.levelNumber + 1).padStart(2, ' '),
+            String(this.score).padStart(4, '0'),
+            this.field ? String(this.field.time).padStart(4, ' ') : ''
+        ];
+        Screen.write(0, 21, `Lads   ${stat[0]}   Level   ${stat[1]}    Score   ${stat[2]}    Bonus time   ${stat[3]}`);
     }
 
     restartLevel() {
@@ -42,6 +56,21 @@ export class Session {
         if (this.levelNumber >= LEVEL_ORDER.length) {
             this.levelCycle++;
             this.levelNumber = 0;
+        }
+    }
+
+    updateScore(scoreType) {
+        switch (scoreType) {
+            case SCORE_ROCK:
+                this.score += 2;
+                break;
+            case SCORE_STATUE:
+                this.score += this.field.time;
+                break;
+            case SCORE_TREASURE:
+                // Called repeatedly during the end-of-level event.
+                this.score += 1;
+                break;
         }
     }
 }

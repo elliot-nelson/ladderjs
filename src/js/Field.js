@@ -1,7 +1,7 @@
 import { Text } from './Text';
 import { Player } from './Player';
 import { Rock } from './Rock';
-import { LEVEL_COLS, LEVEL_ROWS } from './Constants';
+import { LEVEL_COLS, LEVEL_ROWS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from './Constants';
 import { game } from './Game';
 import { State } from './Behavior';
 import { Screen } from './Screen';
@@ -16,7 +16,7 @@ import { Levels } from './Levels-gen';
  */
 export class Field {
     constructor(levelName) {
-        let level = Field.loadLevel(this.levelName);
+        let level = Field.loadLevel(levelName);
 
         this.levelName = levelName;
         this.layout = level.layout;
@@ -30,7 +30,6 @@ export class Field {
     update(session) {
         // Move player based on user input
         this.player.update(this);
-        console.log(['updated', this.player.x, this.player.y]);
 
         // Check if player should be dead (before moving rocks)
         this.checkIfPlayerShouldDie(session);
@@ -44,7 +43,7 @@ export class Field {
         // Collect statues
         if (this.isStatue(this.player.x, this.player.y)) {
             this.layout[this.player.y][this.player.x] = ' ';
-            session.score += 1000;
+            session.updateScore(SCORE_STATUE);
         }
 
         // Collect treasure (ends the current level)
@@ -68,20 +67,14 @@ export class Field {
     }
 
     draw() {
-        Screen.clear();
-
         // Draw layout
-        Screen.write(this.layout.map(row => row.join('')), 0, 0);
+        Screen.write(0, 0, this.layout.map(row => row.join('')));
 
+        // Draw player
         this.player.draw();
 
+        // Draw rocks
         this.rocks.forEach(rock => rock.draw());
-
-        // Score
-        Screen.write(String(this.score), 0, 21);
-
-        // Lives
-        Screen.write(String(4), 8, 21);
     }
 
     onSolid(x, y) {
@@ -89,10 +82,10 @@ export class Field {
     }
 
     emptySpace(x, y) {
-        if (x < 0 || x > LEVEL_COLS) {
-            return true;
+        if (x < 0 || x >= LEVEL_COLS) {
+            return false;
         } else {
-            return !(this.layout[y][x] in ['|', '=']);
+            return !['|', '='].includes(this.layout[y][x]);
         }
     }
 

@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Constants
  */
@@ -38,3 +36,9 @@ export const LEVEL_ORDER = [
     'Long Island',
     'Ghost Town'
 ];
+
+// Score events (note, these are just identifiers for the types of score increases, not
+// actual score values).
+export const SCORE_ROCK = 0
+export const SCORE_STATUE = 1
+export const SCORE_TREASURE = 2

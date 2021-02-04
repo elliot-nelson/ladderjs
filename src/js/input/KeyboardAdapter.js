@@ -48,8 +48,8 @@ export const KeyboardAdapter = {
             let k = KeyboardAdapter.map[event.code];
             // Debugging - key presses
             // console.log(event.key, event.keyCode, event.code, k);
-            console.log(event.code);
-            console.log(event);
+            //console.log(event.code);
+            //console.log(event);
             if (k) {
                 KeyboardAdapter.held[k] = true;
             }

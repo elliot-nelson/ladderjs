@@ -53,7 +53,6 @@ export class Player extends Entity {
             this.nextState = State.START_JUMP;
         }
 
-        console.log(this.x, this.y);
         return this.applyMovement(field);
     }
 
@@ -86,7 +85,6 @@ export class Player extends Entity {
                 break;
         }
 
-        console.log(this.x, this.y);
-        Screen.write(char, this.x, this.y);
+        Screen.write(this.x, this.y, char);
     }
 }

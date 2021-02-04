@@ -4,7 +4,7 @@ import { Sprite } from './Sprite';
 import { Input } from './input/Input';
 import { Text } from './Text';
 import { Viewport } from './Viewport';
-import { TITLE, GAME_WIDTH, GAME_HEIGHT } from './Constants';
+import { GAME_WIDTH, GAME_HEIGHT, PLAY_SPEEDS } from './Constants';
 import { rgba, createCanvas, clamp, partialText, uv2xy, xy2qr } from './Util';
 import { Audio } from './Audio';
 import { Movement } from './systems/Movement';
@@ -16,6 +16,7 @@ import { Field } from './Field';
 import { Screen } from './Screen';
 import { MainMenu } from './MainMenu';
 import { InstructionsMenu } from './InstructionsMenu';
+import { Session } from './Session';
 
 /**
  * Game state.
@@ -62,14 +63,20 @@ export class Game {
     }
 
     onFrame() {
-        Viewport.resize();
+        // If we're in a menu screen, default to a reasonable 30 FPS.
+        // If we're in a game, use the player's selected play speed.
+        let desiredFps = this.session ? PLAY_SPEEDS[this.playSpeed] : 30;
+        let now = new Date().getTime();
+        let lastFrame = this.lastFrame || 0;
 
-        let now = new Date().getTime(), lastFrame = this.lastFrame || 0;
-        if (now - lastFrame >= 1000 / this.fps) {
+        if (now - lastFrame >= 1000 / desiredFps) {
             this.update();
             this.lastFrame = now;
         }
 
+        // No matter what the game FPS is, we'll resize and redraw the screen
+        // on every browser animation frame (usually 60 FPS).
+        Viewport.resize();
         this.draw(Viewport.ctx);
         window.requestAnimationFrame(() => this.onFrame());
     }
@@ -197,15 +204,6 @@ export class Game {
             Viewport.fillViewportRect();
         }
 
-        if (game.frame >= 30 && !game.started) {
-            //let width = Text.measureWidth(TITLE, 3);
-            Text.drawText(
-                Viewport.ctx, TITLE, Viewport.center.u - Text.measureWidth(TITLE, 3) / 2, Viewport.center.v, 3,
-                Text.white,
-                Text.red
-            );
-        }
-
         if (game.victory) {
             Viewport.ctx.fillStyle = rgba(240, 0, 0, clamp(Victory.frame / 1800, 0, 0.7));
             Viewport.fillViewportRect();
@@ -319,6 +317,11 @@ export class Game {
         } else {
             this.gridHovered = undefined;
         }
+    }
+
+    startSession() {
+        this.menu = undefined;
+        this.session = new Session();
     }
 
     showMainMenu() {

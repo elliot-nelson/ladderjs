@@ -70,6 +70,6 @@ export class Rock extends Entity {
                 return;
         }
 
-        Screen.write(char, this.x, this.y);
+        Screen.write(this.x, this.y, char);
     }
 }
