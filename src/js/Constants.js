@@ -34,7 +34,8 @@ export const PLAY_SPEEDS = [10, 20, 40, 76, 142];
 export const LEVEL_ORDER = [
     'Easy Street',
     'Long Island',
-    'Ghost Town'
+    'Ghost Town',
+    'Tunnel Vision'
 ];
 
 // Score events (note, these are just identifiers for the types of score increases, not

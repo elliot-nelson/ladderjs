@@ -28,8 +28,16 @@ export class Field {
     }
 
     update(session) {
+        let oldX = this.player.x, oldY = this.player.y;
+
         // Move player based on user input
         this.player.update(this);
+
+        if (oldX !== this.player.x && oldY === this.player.y) {
+            if (this.isDisappearingFloor(oldX, oldY + 1)) {
+                this.layout[oldY + 1][oldX] = ' ';
+            }
+        }
 
         // Check if player should be dead (before moving rocks)
         this.checkIfPlayerShouldDie(session);
@@ -107,6 +115,10 @@ export class Field {
 
     isFire(x, y) {
         return this.layout[y][x] === '^';
+    }
+
+    isDisappearingFloor(x, y) {
+        return this.layout[y][x] === '-';
     }
 
     canClimbUp(x, y) {

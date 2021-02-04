@@ -15,7 +15,7 @@ export class Session {
 
     update() {
         if (!this.field) {
-            this.field = new Field(LEVEL_ORDER[this.levelNumber]);
+            this.field = new Field(LEVEL_ORDER[this.levelNumber % LEVEL_ORDER.length]);
         }
 
         this.field.update(this);
@@ -53,9 +53,8 @@ export class Session {
     startNextLevel() {
         this.field = undefined;
         this.levelNumber++;
-        if (this.levelNumber >= LEVEL_ORDER.length) {
+        if (this.levelNumber % LEVEL_ORDER.length === 0) {
             this.levelCycle++;
-            this.levelNumber = 0;
         }
     }
 
