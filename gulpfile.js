@@ -193,17 +193,6 @@ async function pngoutAssets() {
     childProcess.execSync('pngout dist/temp/sprites.png');
 }
 
-async function generateMapData() {
-    let data = 'src/maps/map.aseprite';
-    let output = 'src/js/Map-gen.js';
-
-    await MapDataParser.parse(data, output);
-}
-
-async function generateLevelData() {
-    LevelDataParser.parse('src/levels/*.txt', 'src/js/Levels-gen.js');
-}
-
 function copyFinalSprites() {
     return gulp.src('dist/temp/sprites.png')
         .pipe(gulp.dest('dist/final'));
@@ -215,8 +204,6 @@ const buildAssets = gulp.series(
     copyAssets,
     //pngoutAssets,
     generateSpriteSheetData,
-    //generateMapData,
-    generateLevelData,
     copyFinalSprites
 );
 
