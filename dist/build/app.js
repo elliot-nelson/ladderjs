@@ -22,6 +22,27 @@
     const CHAR_HEIGHT = 16;
     const CHARSHEET_WIDTH = 16 * CHAR_WIDTH;
 
+    // Game constants, copied from the original game
+    const LEVEL_ROWS = 20;
+    const LEVEL_COLS = 79;
+
+    // Play speeds, expressed as frames per second. Each number is evenly divisible into 1000ms.
+    const PLAY_SPEEDS = [10, 20, 40, 76, 142];
+
+    // Playable levels (see `Levels-gen.js` for the level data)
+    const LEVEL_ORDER = [
+        'Easy Street',
+        'Long Island',
+        'Ghost Town',
+        'Tunnel Vision'
+    ];
+
+    // Score events (note, these are just identifiers for the types of score increases, not
+    // actual score values).
+    const SCORE_ROCK = 0;
+    const SCORE_STATUE = 1;
+    const SCORE_TREASURE = 2;
+
     /**
      * Viewport
      *
@@ -365,10 +386,12 @@
                 let k = KeyboardAdapter.map[event.code];
                 // Debugging - key presses
                 // console.log(event.key, event.keyCode, event.code, k);
-                console.log(event.code);
+                //console.log(event.code);
+                //console.log(event);
                 if (k) {
                     KeyboardAdapter.held[k] = true;
                 }
+                Input.buffer.push({ key: event.key, at: new Date().getTime() });
             });
 
             window.addEventListener('keyup', event => {
@@ -751,6 +774,8 @@
             // is false, it represents how long the input was last held down.
             this.framesHeld = {};
 
+            this.buffer = [];
+
             KeyboardAdapter.init();
             MouseAdapter.init();
             //GamepadAdapter.init();
@@ -784,6 +809,17 @@
             this.pointer = MouseAdapter.pointer;
             this.direction = KeyboardAdapter.direction;
             //this.direction = this.gamepad.direction.m > 0 ? this.gamepad.direction : this.keyboard.direction;
+
+            let now = new Date().getTime();
+            this.buffer = this.buffer.filter(entry => entry.at > now - 3000);
+        },
+
+        lastKeyPressed() {
+            return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].key : '';
+        },
+
+        consume() {
+            this.buffer = [];
         },
 
         onDown(action) {},
@@ -1248,6 +1284,243 @@
         }
     }
 
+    // This is our list of STATES. Each entity starts out in one of these states and can move between
+    // them based on events that happen in the game. (Note that some of these are directions, but
+    // since an entity keeps moving in the direction it is going unless stopped, directions are
+    // states in this game.)
+    const State = {
+        STOPPED:    1,         // Standing still
+        UP:         2,         // Moving up (player only)
+        LEFT:       3,         // Moving left
+        DOWN:       4,         // Moving down
+        RIGHT:      5,         // Moving right
+        FALLING:    6,         // Falling
+        START_JUMP: 7,         // About to start a jump (player only)
+        JUMP_LEFT:  8,         // Jumping left (player only)
+        JUMP_RIGHT: 9,         // Jumping right (player only)
+        JUMP_UP:    10,        // Jumping straight up (player only)
+        DYING:      11,        // Dying (used as a death animation)
+        DEAD:       12         // Dead (for player, restart level; for rock, disappear)
+    };
+
+    const JUMP_FRAMES = {
+        [State.JUMP_RIGHT]: [
+            { x: 1, y: -1 },
+            { x: 1, y: -1 },
+            { x: 1, y: 0 },
+            { x: 1, y: 0 },
+            { x: 1, y: 1 },
+            { x: 1, y: 1 }
+        ],
+        [State.JUMP_LEFT]: [
+            { x: -1, y: -1 },
+            { x: -1, y: -1 },
+            { x: -1, y: 0 },
+            { x: -1, y: 0 },
+            { x: -1, y: 1 },
+            { x: -1, y: 1 }
+        ],
+        [State.JUMP_UP]: [
+            { x: 0, y: -1 },
+            { x: 0, y: -1 },
+            { x: 0, y: 0 },
+            { x: 0, y: 1 },
+            { x: 0, y: 1 },
+            { x: 0, y: 0 }
+        ],
+    };
+
+    class Entity {
+        applyMovement(field) {
+            let repeat = false;
+
+            // This method contains generic "movement" application for all entities, including
+            // Lad (player) and Der Rocks (enemies). Things like falling, moving left/right, etc.,
+            // work the same for both.
+            //
+            // (There's a bunch of jump logic in here too, and moving UP, which really only applies
+            // to players, but that's OK -- Der Rocks just won't attempt those actions.)
+
+            if (this.nextState) {
+                switch (this.state) {
+                    case State.STOPPED:
+                    case State.LEFT:
+                    case State.RIGHT:
+                        if ([State.LEFT, State.RIGHT, State.STOPPED].includes(this.nextState)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        }
+                        break;
+
+                    case State.UP:
+                    case State.DOWN:
+                        // Normal
+                        if ([State.LEFT, State.RIGHT].includes(this.nextState)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        }
+                        break;
+                }
+            }
+
+            if (this.nextState === State.START_JUMP) {
+                // Special case: the user wants to jump!
+                //
+                // If the player is standing on something solid, we initiate a jump based on the current
+                // movement of the player. If not, we (sort of) ignore the request to jump... although
+                // it does subtly change the behavior upon landing.
+                if (field.onSolid(this.x, this.y)) {
+                    if (this.state === State.STOPPED || this.state === State.FALLING) {
+                        this.state = State.JUMP_UP;
+                        this.jumpStep = 0;
+                        this.nextState = State.STOPPED;
+                    } else if (this.state === State.LEFT || this.state === State.JUMP_LEFT) {
+                        this.state = State.JUMP_LEFT;
+                        this.jumpStep = 0;
+                        this.nextState = State.LEFT;
+                    } else if (this.state === State.RIGHT || this.state === State.JUMP_RIGHT) {
+                        this.state = State.JUMP_RIGHT;
+                        this.jumpStep = 0;
+                        this.nextState = State.RIGHT;
+                    }
+                } else {
+                    if (this.state === State.JUMP_UP || this.state === State.FALLING) {
+                        this.nextState = State.STOPPED;
+                    } else if (this.state === State.JUMP_RIGHT) {
+                        this.nextState = State.RIGHT;
+                    } else if (this.state === State.JUMP_LEFT) {
+                        this.nextState = State.LEFT;
+                    }
+                }
+            } else if (this.nextState === State.UP && field.isLadder(this.x, this.y)) {
+                // Special case: the user wants to go up!
+                //
+                // If the user is on a ladder, we can start ascending. Note that if the user is not
+                // on a ladder we ignore their input, which is intentional -- this allows queued
+                // (pacman) input, where we can tap UP a little before reaching the ladder.
+                this.state = State.UP;
+                this.nextState = undefined;
+            } else if (this.nextState === State.DOWN && (field.isLadder(this.x, this.y) || field.isLadder(this.x, this.y + 1))) {
+                // Special case: the player wants to go down!
+                //
+                // If the player is on (or above) a ladder, we can start descending. Note that if the player is not
+                // on a ladder we ignore their input, which is intentional -- this allows queued
+                // (pacman) input, where we can tap DOWN a little before reaching the ladder.
+                this.state = State.DOWN;
+                this.nextState = undefined;
+            }
+
+            switch (this.state) {
+                case State.LEFT:
+                    if (!field.onSolid(this.x, this.y)) {
+                        this.nextState = State.LEFT;
+                        this.state = State.FALLING;
+                        repeat = true;
+                        break;
+                    }
+                    if (field.emptySpace(this.x - 1, this.y)) {
+                        this.x--;
+                    } else {
+                        this.nextState = State.STOPPED;
+                    }
+                    break;
+
+                case State.RIGHT:
+                    if (!field.onSolid(this.x, this.y)) {
+                        this.nextState = State.RIGHT;
+                        this.state = State.FALLING;
+                        repeat = true;
+                        break;
+                    }
+                    if (field.emptySpace(this.x + 1, this.y)) {
+                        this.x++;
+                    } else {
+                        this.nextState = State.STOPPED;
+                    }
+                    break;
+
+                case State.UP:
+                    if (field.canClimbUp(this.x, this.y - 1)) {
+                        this.y--;
+                    } else {
+                        this.state = State.STOPPED;
+                    }
+                    break;
+
+                case State.DOWN:
+                    if (field.canClimbDown(this.x, this.y + 1)) {
+                        this.y++;
+                    } else {
+                        this.state = State.STOPPED;
+                    }
+                    break;
+
+                case State.JUMP_RIGHT:
+                case State.JUMP_LEFT:
+                case State.JUMP_UP:
+                    let step = JUMP_FRAMES[this.state][this.jumpStep];
+                    if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
+                        let terrain = field.layout[this.y + step.y][this.x + step.x];
+                        if (['=', '|', '-'].includes(terrain)) {
+                            if (field.onSolid(this.x, this.y)) {
+                                this.state = this.nextState;
+                                this.nextState = undefined;
+                            } else {
+                                switch (this.state) {
+                                    case State.JUMP_RIGHT:
+                                        this.nextState = State.RIGHT;
+                                        break;
+                                    case State.JUMP_LEFT:
+                                        this.nextState = State.LEFT;
+                                        break;
+                                    case State.JUMP_UP:
+                                        this.nextState = State.UP;
+                                        break;
+                                }
+                                this.state = State.FALLING;
+                            }
+                        } else if (terrain === 'H') {
+                            this.x += step.x;
+                            this.y += step.y;
+                            this.state = State.STOPPED;
+                            this.nextState = undefined;
+                        } else {
+                            this.x += step.x;
+                            this.y += step.y;
+                            this.jumpStep++;
+
+                            if (this.jumpStep >= JUMP_FRAMES[this.state].length) {
+                                this.state = this.nextState;
+                                this.nextState = undefined;
+                            }
+                        }
+                    } else {
+                        if (field.onSolid(this.x, this.y)) {
+                            this.state = this.nextState;
+                            this.nextState = undefined;
+                        } else {
+                            this.state = State.FALLING;
+                            this.nextState = State.STOPPED;
+                        }
+                    }
+                    break;
+
+                case State.FALLING:
+                    if (field.onSolid(this.x, this.y)) {
+                        this.state = this.nextState || State.STOPPED;
+                    } else {
+                        this.y++;
+                    }
+                    break;
+            }
+
+            // If we were attempting to move somewhere and realized we should be falling instead,
+            // we want to re-run the entire algorithm once. This avoids what boils down to a "skipped
+            // frame" from the user's point of view.
+            if (repeat) return this.applyMovement(field);
+        }
+    }
+
     const Screen = {
         init() {
             this.screen = [];
@@ -1288,17 +1561,583 @@
         }
     };
 
+    const DEATH_FRAMES = ['p', 'b', 'd', 'q', 'p', 'b', 'd', 'q', '-', '-', '_'];
+
+    /**
+     * Player
+     */
+    class Player extends Entity {
+        constructor(x, y) {
+            super();
+            this.x = x;
+            this.y = y;
+            this.state = State.STOPPED;
+            this.nextState = State.STOPPED;
+            this.jumpStep = 0;
+            this.deathStep = 0;
+            console.log('player constructed', x, y);
+        }
+
+        update(field) {
+            if (this.state === State.DYING) {
+                this.deathStep++;
+                if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
+            }
+
+            if (this.state === State.DYING || this.state === State.DEAD) return;
+
+            if (Input.pressed[Input.Action.LEFT]) {
+                this.nextState = State.LEFT;
+            }
+
+            if (Input.pressed[Input.Action.RIGHT]) {
+                this.nextState = State.RIGHT;
+            }
+
+            if (Input.pressed[Input.Action.UP]) {
+                this.nextState = State.UP;
+            }
+
+            if (Input.pressed[Input.Action.DOWN]) {
+                this.nextState = State.DOWN;
+            }
+
+            if (Input.pressed[Input.Action.JUMP]) {
+                this.nextState = State.START_JUMP;
+            }
+
+            return this.applyMovement(field);
+        }
+
+        draw() {
+            let char = 'g';
+
+            switch (this.state) {
+                case State.RIGHT:
+                case State.JUMP_RIGHT:
+                case State.UP:
+                case State.DOWN:
+                    char = 'p';
+                    break;
+
+                case State.LEFT:
+                case State.JUMP_LEFT:
+                    char = 'q';
+                    break;
+
+                case State.FALLING:
+                    char = 'b';
+                    break;
+
+                case State.DYING:
+                    char = DEATH_FRAMES[this.deathStep];
+                    break;
+
+                case State.DEAD:
+                    char = '_';
+                    break;
+            }
+
+            Screen.write(this.x, this.y, char);
+        }
+    }
+
+    const DEATH_FRAMES$1 = ['%', ':'];
+
+    class Rock extends Entity {
+        constructor(dispenser) {
+            super();
+            this.x = dispenser.x;
+            this.y = dispenser.y + 1;
+            this.state = State.FALLING;
+            this.nextState = undefined;
+            this.deathStep = 0;
+        }
+
+        update(field) {
+            if (this.state === State.DYING) {
+                this.deathStep++;
+                if (this.deathStep >= DEATH_FRAMES$1.length) this.state = State.DEAD;
+            }
+
+            if (this.state === State.DYING || this.state === State.DEAD) return;
+
+            if (this.state === State.STOPPED) {
+                if (this.x === 0 || !field.emptySpace(this.x - 1, this.y)) {
+                    this.nextState = State.RIGHT;
+                } else if (this.x === LEVEL_COLS - 1 || !field.emptySpace(this.x + 1, this.y)) {
+                    this.nextState = State.LEFT;
+                } else {
+                    this.nextState = Math.random() > 0.5 ? State.LEFT : State.RIGHT;
+                }
+            }
+
+            if (this.x === 0 && this.state === State.LEFT) {
+                this.state = State.RIGHT;
+            }
+
+            if (this.x === LEVEL_COLS - 1 && this.state === State.RIGHT) {
+                this.state = State.LEFT;
+            }
+
+            if (this.state !== State.FALLING && !field.onSolid(this.x, this.y)) {
+                this.nextState = State.FALLING;
+            }
+
+            if (field.isLadder(this.x, this.y + 1) && [State.LEFT, State.RIGHT].includes(this.state)) {
+                let r = Math.floor(Math.random() * 4);
+                this.nextState = [State.LEFT, State.RIGHT, State.DOWN, State.DOWN][r];
+            }
+
+            if (field.isEater(this.x, this.y)) {
+                this.state = State.DYING;
+                return;
+            }
+
+            this.applyMovement(field);
+        }
+
+        draw() {
+            let char = 'o';
+
+            switch (this.state) {
+                case State.DYING:
+                    char = DEATH_FRAMES$1[this.deathStep];
+                    break;
+                case State.DEAD:
+                    return;
+            }
+
+            Screen.write(this.x, this.y, char);
+        }
+    }
+
+    var LevelData = [
+    	{
+    		name: "Easy Street",
+    		time: 35,
+    		maxRocks: 5,
+    		layout: [
+    			"                                       V                 $                     ",
+    			"                                                         H                     ",
+    			"                H                                        H                     ",
+    			"       =========H==================================================            ",
+    			"                H                                                              ",
+    			"                H                                                              ",
+    			"                H          H                             H                     ",
+    			"================H==========H==================   ========H=====================",
+    			"                &          H                             H          |       |  ",
+    			"                                                         H         Easy Street ",
+    			"                H                                        H                     ",
+    			"       =========H==========H=========  =======================                 ",
+    			"                H                                                              ",
+    			"                H                                                              ",
+    			"                H                                        H                     ",
+    			"======================== ====================== =========H==============       ",
+    			"                                                         H                     ",
+    			"                                                         H                     ",
+    			"*    p                                                   H                    *",
+    			"==============================================================================="
+    		]
+    	},
+    	{
+    		name: "Long Island",
+    		time: 45,
+    		maxRocks: 8,
+    		layout: [
+    			"                                                                          $    ",
+    			"                                                                   &      H    ",
+    			"    H       |V                                                     V|     H    ",
+    			"====H======================= ========================= ======================  ",
+    			"    H                                                                          ",
+    			"    H                                                                          ",
+    			"    H                    & |                         . .                  H    ",
+    			"========================== ======  =================== ===================H==  ",
+    			"                                                                          H    ",
+    			"                                  |                                       H    ",
+    			"    H                             |                 .  .                  H    ",
+    			"====H=====================   ======  ================  ======================  ",
+    			"    H                                                                          ",
+    			"    H                      |                                                   ",
+    			"    H                      |                        .   .                 H    ",
+    			"=========================  ========    ==============   ==================H==  ",
+    			"                                                                          H    ",
+    			"==============                      |                                     H    ",
+    			" Long Island |   p         *        |                 *                   H    ",
+    			"==============================================================================="
+    		]
+    	},
+    	{
+    		name: "Ghost Town",
+    		time: 35,
+    		maxRocks: 5,
+    		layout: [
+    			"                            V               V           V               $      ",
+    			"                                                                       $$$     ",
+    			"     p    H                                                    H      $$$$$   H",
+    			"==========H===                                                =H==============H",
+    			"          H                                                    H              H",
+    			"          H                              &                     H              H",
+    			"     ==============   ====     =    ======    =   ====    =====H=====         H",
+    			"    G              ^^^    ^^^^^ ^^^^      ^^^^ ^^^    ^^^                     $",
+    			"    h                                                                 |        ",
+    			"    o     |                     H                             &       |        ",
+    			"    s     ======================H============================== ===========    ",
+    			"    t        &                  H                                              ",
+    			"                                H                                              ",
+    			"              |                 H                 H                   H        ",
+    			"    T         ==================H=================H===================H======= ",
+    			"    o                                             H                   H        ",
+    			"    w                                                                 H        ",
+    			"    n                           ^                                     H        ",
+    			"*                              ^^^                                    H       *",
+    			"==============================================================================="
+    		]
+    	},
+    	{
+    		name: "Tunnel Vision",
+    		time: 36,
+    		rocks: 5,
+    		layout: [
+    			"                                            V                       V          ",
+    			"                                                                               ",
+    			"     H             H                         |                H                ",
+    			"=====H=====--======H==========================     ===----====H===========     ",
+    			"     H             H                |&&                       H                ",
+    			"     H             H                ==================        H                ",
+    			"     H             H                       tunnel  H          H                ",
+    			"     H           =======---===----=================H=         H           H    ",
+    			"     H         |                           vision  H          H           H    ",
+    			"     H         =========---&      -----============H          H           H    ",
+    			"     H           H                                 H |        H           H    ",
+    			"     H           H=========----===----================        H  ==============",
+    			"                 H                                        &   H                ",
+    			"                 H                                        |   H                ",
+    			"====---====      H                                        |   H                ",
+    			"|         |    ================---===---===================   H                ",
+    			"|   ===   |                                                   H        H    p  ",
+    			"|    $    |                                                   H     ===H=======",
+    			"|*  $$$  *|   *                *       *                     *H       *H       ",
+    			"==============================================================================="
+    		]
+    	},
+    	{
+    		name: "Point of No Return",
+    		time: 35,
+    		maxRocks: 7,
+    		layout: [
+    			"         $                                                                     ",
+    			"         H                                                   V                 ",
+    			"         H                                                                     ",
+    			"         HHHHHHHHHHHHH     .HHHHHHHHHHHHHH                          H    p     ",
+    			"         &                   V           H                        ==H==========",
+    			"                                         H                          H          ",
+    			"   H                                     H        .                 H          ",
+    			"===H==============-----------============H====                      H          ",
+    			"   H                                                      H         H          ",
+    			"   H                                                 =====H==============      ",
+    			"   H                                     H                H                    ",
+    			"   H              &..^^^.....^..^ . ^^   H==---------     H                    ",
+    			"   H         ============================H    &           H             H      ",
+    			"   H         ===      ===      ===       H    ---------=================H======",
+    			"   H                                     H                              H      ",
+    			"   H                          &          H          &                   H      ",
+    			"   ==========-------------------------=======----------===================     ",
+    			"                                                                               ",
+    			"^^^*         ^^^^^^^^^^^^^^^^^^^^^^^^^*     *^^^^^^^^^^*Point of No Return*^^^^",
+    			"==============================================================================="
+    		]
+    	},
+    	{
+    		name: "Bug City",
+    		time: 37,
+    		maxRocks: 6,
+    		layout: [
+    			"        Bug City             HHHHHHHH                          V               ",
+    			"                           HHH      HHH                                        ",
+    			"   H                                          >mmmmmmmm                        ",
+    			"   H===============                   ====================          H          ",
+    			"   H              |=====       \\  /         V                  =====H==========",
+    			"   H                            \\/                                  H          ",
+    			"   H                                        | $                     H          ",
+    			"   H           H                            | H                     H          ",
+    			"   H       ====H=======          p          |&H    H                H          ",
+    			"   H           H             ======================H           ======          ",
+    			"   H           H      &|                           H                    H      ",
+    			"   H           H      &|                    H      H     }{        =====H====  ",
+    			"===H===&       H       =====================H      H                    H      ",
+    			"               H                            H      H                    H      ",
+    			"               H                            H      &                    H      ",
+    			"         ======H===   =======    H    <>    &                           H      ",
+    			"                                 H==========       =====     =     ============",
+    			"     }i{                         H                                             ",
+    			"*                                H                                            *",
+    			"==============================================================================="
+    		]
+    	},
+    	{
+    		name: "GangLand",
+    		time: 32,
+    		maxRocks: 6,
+    		layout: [
+    			"                    =Gang Land=                             V                  ",
+    			"                   ==      _  ==                                      .        ",
+    			"      p    H        |  [] |_| |                  &                    .  H     ",
+    			"===========H        |     |_| |       H         ===   ===================H     ",
+    			"      V    H        =============     H======                            H     ",
+    			"           H                          H                     &            H     ",
+    			"           H                          H                |    |            H     ",
+    			"    H      H        ^^^&&^^^ & ^  ^^^ H           H    |    =============H     ",
+    			"    H======H   =======================H===========H=====          &      H     ",
+    			"    H                                 H           H    |         &&&     H     ",
+    			"    H                                 H           H    |        &&&&&    H     ",
+    			"    H                                 H           H    |    =============H     ",
+    			"              =====------=================        H    |       $     $         ",
+    			"                                         |        H    |      $$$   $$$        ",
+    			"====------===                            |        H    |     $$$$$ $$$$$       ",
+    			"            |       =                    | =============    ============       ",
+    			"            |       $                     ^          &                         ",
+    			"            |^^^^^^^^^^^^^^      $ ^              ======                       ",
+    			"*                   .      &   ^ H*^                    ^  ^       ^^^^^^^^^^^^",
+    			"==============================================================================="
+    		]
+    	}
+    ];
+
+    const Level = {
+        LEVELS: LevelData,
+
+        load(levelNumber) {
+            console.log(Level.LEVELS);
+            // As the player keeps playing, level numbers will loop around to beginning
+            let level = Level.LEVELS[levelNumber % Level.LEVELS.length];
+            if (!level) throw new Error(`No such level number: ${levelNumber}`);
+
+            // Perform some sanity checks on the level layout and extract useful info
+            // like player start position and dispenser positions etc.
+
+            let layout = level.layout.map(row => row.split(''));
+            let dispensers = [];
+            let player;
+
+            // Sanity check
+            layout = layout.slice(0, LEVEL_ROWS);
+
+            for (let y = 0; y < LEVEL_ROWS; y++) {
+                // Sanity checks
+                if (!layout[y]) layout[y] = [];
+                layout[y] = layout[y].slice(0, LEVEL_COLS);
+
+                for (let x = 0; x < LEVEL_COLS; x++) {
+                    // Sanity check
+                    if (!layout[y][x]) layout[y][x] = ' ';
+
+                    // Der Dispensers (V) and Der Eaters (*) have behaviors, so it is convenient for us
+                    // to construct a list of them, but they are permanent parts of the layout, so we can
+                    // leave them as part of the level and draw them normally.
+
+                    if (layout[y][x] === 'V') {
+                        dispensers.push({ x, y });
+                    }
+
+                    // Treasure ($), Statues (&), and the Lad (p) are transient - the player moves around and
+                    // can pick up the treasures and statues. That's why for these elements, we add them to
+                    // our lists AND we remove them from the "playing field", we'll draw them separately on
+                    // top of the layout.
+
+                    if (layout[y][x] === 'p') {
+                        layout[y][x] = ' ';
+                        player = { x, y };
+                    }
+
+                    // Everything else, like floors (=), walls (|), ladders (H) and fire (^), is part of the
+                    // layout. The Lad interacts with them, but we can handle that during our movement checks.
+                }
+            }
+
+            return {
+                name: level.name,
+                time: level.time,
+                maxRocks: level.maRrocks,
+                layout,
+                dispensers,
+                player
+            };
+        }
+    };
+
+    /**
+     * Field
+     *
+     * The "field" represents the current level, or, "playing field". A new playing field is created
+     * every time you start a level, so we attach everything about the currently played level to
+     * the field -- positions of treasure, the player, victory conditions, etc.
+     */
+    class Field {
+        constructor(levelNumber) {
+            let level = Level.load(levelNumber);
+
+            this.layout = level.layout;
+            this.dispensers = level.dispensers;
+            this.time = level.time;
+            this.maxRocks = level.rocks;
+            this.rocks = [];
+            this.player = new Player(level.player.x, level.player.y);
+        }
+
+        update(session) {
+            let oldX = this.player.x, oldY = this.player.y;
+
+            // Move player based on user input
+            this.player.update(this);
+
+            if (oldX !== this.player.x && oldY === this.player.y) {
+                if (this.isDisappearingFloor(oldX, oldY + 1)) {
+                    this.layout[oldY + 1][oldX] = ' ';
+                }
+            }
+
+            // Check if player should be dead (before moving rocks)
+            this.checkIfPlayerShouldDie(session);
+
+            // Move rocks
+            for (let rock of this.rocks) rock.update(this);
+
+            // Check if player should be dead (after moving rocks)
+            this.checkIfPlayerShouldDie(session);
+
+            // Collect statues
+            if (this.isStatue(this.player.x, this.player.y)) {
+                this.layout[this.player.y][this.player.x] = ' ';
+                session.updateScore(SCORE_STATUE);
+            }
+
+            // Collect treasure (ends the current level)
+            if (this.isTreasure(this.player.x, this.player.y)) {
+                session.startNextLevel();
+            }
+
+            // Dispense new rocks
+            if (this.rocks.length < 3 && Math.random() > 0.9) {
+                let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
+                this.rocks.push(new Rock(dispenser));
+            }
+
+            // Kill dead rocks
+            this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
+
+            // Kill player
+            if (this.player.state === State.DEAD) {
+                session.restartLevel();
+            }
+        }
+
+        draw() {
+            // Draw layout
+            Screen.write(0, 0, this.layout.map(row => row.join('')));
+
+            // Draw player
+            this.player.draw();
+
+            // Draw rocks
+            this.rocks.forEach(rock => rock.draw());
+        }
+
+        onSolid(x, y) {
+            return ['=', '-', 'H', '|'].includes(this.layout[y + 1][x]) || this.layout[y][x] === 'H';
+        }
+
+        emptySpace(x, y) {
+            if (x < 0 || x >= LEVEL_COLS) {
+                return false;
+            } else {
+                return !['|', '='].includes(this.layout[y][x]);
+            }
+        }
+
+        isLadder(x, y) {
+            return this.layout[y][x] === 'H';
+        }
+
+        isStatue(x, y) {
+            return this.layout[y][x] === '&';
+        }
+
+        isTreasure(x, y) {
+            return this.layout[y][x] === '$';
+        }
+
+        isEater(x, y) {
+            return this.layout[y][x] === '*';
+        }
+
+        isFire(x, y) {
+            return this.layout[y][x] === '^';
+        }
+
+        isDisappearingFloor(x, y) {
+            return this.layout[y][x] === '-';
+        }
+
+        canClimbUp(x, y) {
+            return ['H', '&', '$'].includes(this.layout[y][x]);
+        }
+
+        canClimbDown(x, y) {
+            return ['H', '&', '$', ' ', '^', '.'].includes(this.layout[y][x]);
+        }
+
+        checkIfPlayerShouldDie(session) {
+            if (this.player.state === State.DYING || this.player.state === State.DEAD) return;
+
+            if (this.isFire(this.player.x, this.player.y)) {
+                this.player.state = State.DYING;
+            }
+
+            for (let i = 0; i < this.rocks.length; i++) {
+                if (this.player.x === this.rocks[i].x) {
+                    if (this.player.y === this.rocks[i].y) {
+                        this.player.state = State.DYING;
+                        this.rocks.splice(i, 1);
+                        break;
+                    } else if (this.player.y === this.rocks[i].y - 1 && this.emptySpace(this.player.x, this.player.y + 1)) {
+                        session.updateScore(SCORE_ROCK);
+                    } else if (this.player.y === this.rocks[i].y - 2 && this.emptySpace(this.player.x, this.player.y + 1) && this.emptySpace(this.player.x, this.player.y + 2)) {
+                        session.updateScore(SCORE_ROCK);
+                    }
+                }
+            }
+        }
+    }
+
     class MainMenu {
         constructor() {
         }
 
         update() {
+            switch (Input.lastKeyPressed().toUpperCase()) {
+                case 'P':
+                    Input.consume();
+                    game.startSession();
+                    break;
+                case 'L':
+                    Input.consume();
+                    game.playSpeed = (game.playSpeed + 1) % PLAY_SPEEDS.length;
+                    break;
+                case 'I':
+                    Input.consume();
+                    game.showInstructions();
+                    break;
+                case 'E':
+                    Input.consume();
+                    game.showInstructions();
+                    break;
+            }
         }
 
         draw() {
             let version = '?';
             let terminal = '?';
-            let speed = '?';
 
             let highScores = [
                 `1) 6000  Bob`,
@@ -1308,6 +2147,7 @@
                 ``
             ];
 
+            Screen.clear();
             Screen.write(0, 0, [
                 `               LL                     dd       dd`,
                 `               LL                     dd       dd                      tm`,
@@ -1319,11 +2159,9 @@
                 ``,
                 `                                       Version:    ${version}`,
                 `(c) 1982, 1983 Yahoo Software          Terminal:   ${terminal}`,
-                `10970 Ashton Ave.  Suite 312           Play speed: ${speed}`,
+                `10970 Ashton Ave.  Suite 312           Play speed: ${game.playSpeed + 1} / ${PLAY_SPEEDS.length}`,
                 `Los Angeles, Ca  90024                 Move = ↑↓←→/WASD, Jump = Space,`,
                 `                                       Stop = Other`,
-                `                                       `,
-                ``,
                 ``,
                 `P = Play game                          High Scores`,
                 `L = Change level of difficulty         ${highScores[0]}`,
@@ -1334,6 +2172,117 @@
                 ``,
                 `Enter one of the above:`
             ]);
+        }
+    }
+
+    class InstructionsMenu {
+        constructor() {
+        }
+
+        update() {
+            if (Input.lastKeyPressed().toUpperCase() !== '') {
+                Input.consume();
+                game.showMainMenu();
+            }
+        }
+
+        draw() {
+            Screen.clear();
+            Screen.write(0, 0, [
+                `You are a Lad trapped in a maze.  Your mission is is to explore the`,
+                `dark corridors never before seen by human eyes and find hidden`,
+                `treasures and riches.`,
+                ``,
+                `You control Lad by typing the direction buttons and jumping by`,
+                `typing SPACE.  But beware of the falling rocks called Der rocks.`,
+                `You must find and grasp the treasures (shown as $) BEFORE the`,
+                `bonus time runs out.`,
+                ``,
+                `A new Lad will be awarded for every 10,000 points.`,
+                `Extra points are awarded for touching the gold`,
+                `statues (shown as &).  You will receive the bonus time points`,
+                `that are left when you have finished the level.`,
+                ``,
+                `Type an ESCape to pause the game.`,
+                ``,
+                `Remember, there is more than one way to skin a cat. (Chum)`,
+                ``,
+                `Good luck Lad.`,
+                ``,
+                ``,
+                ``,
+                `Type RETURN to return to main menu:`
+            ]);
+        }
+    }
+
+    class Session {
+        constructor() {
+            this.score = 0;
+            this.levelNumber = 0;
+            this.levelCycle = 1;
+            this.lives = 5;
+            this.nextLife = 100;
+        }
+
+        update() {
+            if (!this.field) {
+                this.field = new Field(this.levelNumber);
+            }
+
+            this.field.update(this);
+
+            let recentKeystrokes = Input.buffer.map(event => event.key).join('').toUpperCase();
+
+            if (recentKeystrokes.match(/IDCLEV(\d\d)/)) {
+                Input.consume();
+                this.field = undefined;
+                this.levelNumber = parseInt(RegExp.$1, 10);
+            } else if (recentKeystrokes.includes("IDDQD")) {
+                Input.consume();
+                console.log("god mode");
+            }
+        }
+
+        draw() {
+            Screen.clear();
+
+            if (this.field) this.field.draw();
+
+            let stat = [
+                String(this.lives).padStart(2, ' '),
+                String(this.levelNumber + 1).padStart(2, ' '),
+                String(this.score).padStart(4, '0'),
+                this.field ? String(this.field.time).padStart(4, ' ') : ''
+            ];
+            Screen.write(0, 21, `Lads   ${stat[0]}   Level   ${stat[1]}    Score   ${stat[2]}    Bonus time   ${stat[3]}`);
+        }
+
+        restartLevel() {
+            this.field = undefined;
+        }
+
+        startNextLevel() {
+            this.field = undefined;
+            this.levelNumber++;
+            if (this.levelNumber % LEVEL_ORDER.length === 0) {
+                this.levelCycle++;
+            }
+        }
+
+        updateScore(scoreType) {
+            switch (scoreType) {
+                case SCORE_ROCK:
+                    this.score += 2;
+                    break;
+                case SCORE_STATUE:
+                    this.score += this.field.time;
+                    break;
+                case SCORE_TREASURE:
+                    // Called repeatedly during the end-of-level event.
+                    this.score += 1;
+                    break;
+            }
         }
     }
 
@@ -1375,19 +2324,27 @@
 
             this.menu = new MainMenu();
 
+            this.playSpeed = 0;
+
             this.update();
             window.requestAnimationFrame((delta) => this.onFrame(delta));
         }
 
         onFrame() {
-            Viewport.resize();
+            // If we're in a menu screen, default to a reasonable 30 FPS.
+            // If we're in a game, use the player's selected play speed.
+            let desiredFps = this.session ? PLAY_SPEEDS[this.playSpeed] : 30;
+            let now = new Date().getTime();
+            let lastFrame = this.lastFrame || 0;
 
-            let now = new Date().getTime(), lastFrame = this.lastFrame || 0;
-            if (now - lastFrame >= 1000 / this.fps) {
+            if (now - lastFrame >= 1000 / desiredFps) {
                 this.update();
                 this.lastFrame = now;
             }
 
+            // No matter what the game FPS is, we'll resize and redraw the screen
+            // on every browser animation frame (usually 60 FPS).
+            Viewport.resize();
             this.draw(Viewport.ctx);
             window.requestAnimationFrame(() => this.onFrame());
         }
@@ -1559,6 +2516,21 @@
             } else {
                 this.gridHovered = undefined;
             }
+        }
+
+        startSession() {
+            this.menu = undefined;
+            this.session = new Session();
+        }
+
+        showMainMenu() {
+            this.menu = new MainMenu();
+            this.session = undefined;
+        }
+
+        showInstructions() {
+            this.menu = new InstructionsMenu();
+            this.session = undefined;
         }
     }
 

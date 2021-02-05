@@ -5,7 +5,7 @@ import { LEVEL_COLS, LEVEL_ROWS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from
 import { game } from './Game';
 import { State } from './Behavior';
 import { Screen } from './Screen';
-import { Levels } from './Levels-gen';
+import { Level } from './Level';
 
 /**
  * Field
@@ -15,10 +15,9 @@ import { Levels } from './Levels-gen';
  * the field -- positions of treasure, the player, victory conditions, etc.
  */
 export class Field {
-    constructor(levelName) {
-        let level = Field.loadLevel(levelName);
+    constructor(levelNumber) {
+        let level = Level.load(levelNumber);
 
-        this.levelName = levelName;
         this.layout = level.layout;
         this.dispensers = level.dispensers;
         this.time = level.time;
@@ -149,58 +148,5 @@ export class Field {
                 }
             }
         }
-    }
-
-    static loadLevel(levelName) {
-        let level = Levels.find(level => level.name === levelName);
-        if (!level) throw new Error(`No such level: ${levelName}`);
-
-        let layout = level.layout.map(row => row.split(''));
-        let dispensers = [];
-        let player;
-
-        // Sanity check
-        layout = layout.slice(0, LEVEL_ROWS);
-
-        for (let y = 0; y < LEVEL_ROWS; y++) {
-            // Sanity checks
-            if (!layout[y]) layout[y] = [];
-            layout[y] = layout[y].slice(0, LEVEL_COLS);
-
-            for (let x = 0; x < LEVEL_COLS; x++) {
-                // Sanity check
-                if (!layout[y][x]) layout[y][x] = ' ';
-
-                // Der Dispensers (V) and Der Eaters (*) have behaviors, so it is convenient for us
-                // to construct a list of them, but they are permanent parts of the layout, so we can
-                // leave them as part of the level and draw them normally.
-
-                if (layout[y][x] === 'V') {
-                    dispensers.push({ x, y });
-                }
-
-                // Treasure ($), Statues (&), and the Lad (p) are transient - the player moves around and
-                // can pick up the treasures and statues. That's why for these elements, we add them to
-                // our lists AND we remove them from the "playing field", we'll draw them separately on
-                // top of the layout.
-
-                if (layout[y][x] === 'p') {
-                    layout[y][x] = ' ';
-                    player = { x, y };
-                }
-
-                // Everything else, like floors (=), walls (|), ladders (H) and fire (^), is part of the
-                // layout. The Lad interacts with them, but we can handle that during our movement checks.
-            }
-        }
-
-        return {
-            name: level.name,
-            time: level.time,
-            rocks: level.rocks,
-            layout,
-            dispensers,
-            player
-        };
     }
 }

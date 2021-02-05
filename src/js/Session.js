@@ -15,7 +15,7 @@ export class Session {
 
     update() {
         if (!this.field) {
-            this.field = new Field(LEVEL_ORDER[this.levelNumber % LEVEL_ORDER.length]);
+            this.field = new Field(this.levelNumber);
         }
 
         this.field.update(this);

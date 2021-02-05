@@ -8,6 +8,7 @@ const fs                = require('fs');
 const gulp              = require('gulp');
 const log               = require('fancy-log');
 const rollup            = require('rollup');
+const rollupJson        = require('@rollup/plugin-json');
 
 const AsepriteCli       = require('./tools/aseprite-cli');
 const ImageDataParser   = require('./tools/image-data-parser');
@@ -42,6 +43,7 @@ async function compileBuild() {
     try {
         const bundle = await rollup.rollup({
             input: 'src/js/index.js',
+            plugins: rollupJson(),
             onwarn: (warning, rollupWarn) => {
                 // Suppress circular dependency spam.
                 if (warning.code !== 'CIRCULAR_DEPENDENCY') {
