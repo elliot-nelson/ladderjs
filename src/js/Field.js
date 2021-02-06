@@ -58,6 +58,35 @@ export class Field {
             session.startNextLevel();
         }
 
+        // Interact with trampolines
+        if (this.isTrampoline(this.player.x, this.player.y)) {
+            switch (Math.floor(Math.random() * 5)) {
+                case 0:
+                    this.player.state = State.LEFT;
+                    this.player.nextState = undefined;
+                    break;
+                case 1:
+                    this.player.state = State.RIGHT;
+                    this.player.nextState = undefined;
+                    break;
+                case 2:
+                    this.player.state = State.JUMP_UP;
+                    this.player.nextState = undefined;
+                    this.player.jumpStep = 0;
+                    break;
+                case 3:
+                    this.player.state = State.JUMP_LEFT;
+                    this.player.nextState = State.LEFT;
+                    this.player.jumpStep = 0;
+                    break;
+                case 4:
+                    this.player.state = State.JUMP_RIGHT;
+                    this.player.nextState = State.RIGHT;
+                    this.player.jumpStep = 0;
+                    break;
+            }
+        }
+
         // Dispense new rocks
         if (this.rocks.length < 3 && Math.random() > 0.9) {
             let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
@@ -106,6 +135,10 @@ export class Field {
 
     isTreasure(x, y) {
         return this.layout[y][x] === '$';
+    }
+
+    isTrampoline(x, y) {
+        return this.layout[y][x] === '.';
     }
 
     isEater(x, y) {

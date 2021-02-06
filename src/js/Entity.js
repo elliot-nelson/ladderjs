@@ -130,6 +130,7 @@ export class Entity {
             case State.JUMP_LEFT:
             case State.JUMP_UP:
                 let step = JUMP_FRAMES[this.state][this.jumpStep];
+                console.log(['jump', this.state, this.jumpStep, step]);
                 if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
                     let terrain = field.layout[this.y + step.y][this.x + step.x];
                     if (['=', '|', '-'].includes(terrain)) {
