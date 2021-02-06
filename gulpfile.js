@@ -250,6 +250,10 @@ function buildZip() {
 // -----------------------------------------------------------------------------
 // Build
 // -----------------------------------------------------------------------------
+function copyAssetsToSite() {
+    return gulp.src('dist/build/*').pipe(gulp.dest('site/play'));
+}
+
 async function ready() {
     if (watching) {
         childProcess.exec('say OK');
@@ -261,6 +265,7 @@ const build = gulp.series(
     buildJs,
     buildCss,
     buildHtml,
+    copyAssetsToSite,
     ready,
     buildZip
 );
