@@ -66,47 +66,13 @@ async function compileBuild() {
 
 function minifyBuild() {
     // Fast Mode Shortcut
-    if (fast) return Promise.resolve();
 
     let cache = {};
 
     return gulp.src('dist/temp/app.js')
-        //.pipe(sourcemaps.init())
-        // Phase 1: Mangle all props except DOM & built-ins. (Reserved props are built-ins
-        // that terser doesn't know about yet, but which will break the game if they get mangled.)
-        .pipe(terser({
-            toplevel: true,
-            nameCache: cache,
-            mangle: {
-                properties: {
-                    reserved: [
-                        'imageSmoothingEnabled',
-                        'KeyW',
-                        'KeyA',
-                        'KeyS',
-                        'KeyD',
-                        'ArrowUp',
-                        'ArrowLeft',
-                        'ArrowDown',
-                        'ArrowRight',
-                        'Escape',
-                        'OS13kMusic,Wizard with a Shotgun - Oblique Mystique'
-                    ]
-                }
-            }
-        }))
-        // Phase 2: Specifically target properties we know match builtins but that
-        // we can still safely mangle (because we don't refer to the builtin).
-        .pipe(terser({
-            nameCache: cache,
-            mangle: {
-                properties: {
-                    builtins: true,
-                    regex: /^(behavior|direction|frame|reset|update|anchor|DEAD|canvas|entities|history|pressed|page|paused|resize|reload|pages|pattern|pause|unpause|sheet|state|init|play|text)$/
-                }
-            }
-        }))
-        //.pipe(sourcemaps.write('.'))
+        .pipe(sourcemaps.init())
+        .pipe(terser())
+        .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest('dist/temp'));
 }
 
@@ -125,25 +91,13 @@ function buildCss() {
 // -----------------------------------------------------------------------------
 // Assets Build
 // -----------------------------------------------------------------------------
-async function exportTerrainSprites() {
-    let src = 'src/assets/terrain/*.aseprite';
-    let png = 'dist/temp/terrain/{layer}.aseprite';
-
-    try {
-        let r = await AsepriteCli.exec(`--batch ${src} --split-layers --trim --save-as ${png}`);
-        console.log(r);
-    } catch (e) {
-        log.error(e);
-        log.warn(chalk.red('Failed to update sprite sheet, but building anyway...'));
-    }
-}
 
 async function exportSpriteSheet() {
     // Exporting the sprite sheet is the first step - using Aseprite, we take as input
     // all of our source aseprite files, and spit out a single spritesheet PNG and a JSON
     // file containing the x/y/w/h coordinates of the sprites in the spritesheet.
 
-    let src = 'src/assets/*.aseprite dist/temp/terrain/t*.aseprite';
+    let src = 'src/assets/*.aseprite';
     let png = 'src/assets/spritesheet-gen.png';
     let data = 'src/assets/spritesheet-gen.json';
 
@@ -199,7 +153,6 @@ function copyFinalSprites() {
 }
 
 const buildAssets = gulp.series(
-    exportTerrainSprites,
     exportSpriteSheet,
     copyAssets,
     //pngoutAssets,
