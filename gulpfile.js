@@ -18,7 +18,6 @@ const LevelDataParser   = require('./tools/level-data-parser');
 // -----------------------------------------------------------------------------
 // Gulp Plugins
 // -----------------------------------------------------------------------------
-const advzip            = require('gulp-advzip');
 const concat            = require('gulp-concat');
 const cleancss          = require('gulp-clean-css');
 const htmlmin           = require('gulp-htmlmin');
@@ -28,7 +27,6 @@ const size              = require('gulp-size');
 const sourcemaps        = require('gulp-sourcemaps');
 const template          = require('gulp-template');
 const terser            = require('gulp-terser');
-const zip               = require('gulp-zip');
 
 // -----------------------------------------------------------------------------
 // Flags
@@ -55,7 +53,8 @@ async function compileBuild() {
         await bundle.write({
             file: 'dist/temp/app.js',
             format: 'iife',
-            name: 'app'
+            name: 'app',
+            sourcemap: 'inline'
         });
     } catch (error) {
         // Use rollup's error output
@@ -70,8 +69,8 @@ function minifyBuild() {
     let cache = {};
 
     return gulp.src('dist/temp/app.js')
-        .pipe(sourcemaps.init())
-        .pipe(terser())
+        .pipe(sourcemaps.init({ loadMaps: true }))
+        .pipe(terser({ mangle: false }))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest('dist/temp'));
 }
@@ -82,10 +81,9 @@ const buildJs = gulp.series(compileBuild, minifyBuild);
 // CSS Build
 // -----------------------------------------------------------------------------
 function buildCss() {
-    return gulp.src('src/css/*.css')
-        .pipe(concat('app.css'))
+    return gulp.src('src/app.css')
         .pipe(cleancss())
-        .pipe(gulp.dest('dist/temp'));
+        .pipe(gulp.dest('dist/build'));
 }
 
 // -----------------------------------------------------------------------------
@@ -164,40 +162,11 @@ const buildAssets = gulp.series(
 // HTML Build
 // -----------------------------------------------------------------------------
 function buildHtml() {
-    const cssContent = fs.readFileSync('dist/temp/app.css');
-    //const jsContent = fs.readFileSync('dist/temp/app.js');
-
     return gulp.src('src/index.html')
-        .pipe(template({ css: cssContent /*, js: jsContent */ }))
         .pipe(htmlmin({ collapseWhitespace: true }))
         .pipe(gulp.src('dist/temp/app.js.map'))
         .pipe(gulp.src('dist/temp/app.js'))
         .pipe(gulp.dest('dist/build'));
-}
-
-// -----------------------------------------------------------------------------
-// ZIP Build
-// -----------------------------------------------------------------------------
-function buildZip() {
-    let s;
-
-    // Fast Mode Shortcut
-    if (fast) return Promise.resolve();
-
-    return gulp.src(['dist/build/*', '!dist/build/*.map'])
-        .pipe(size())
-        .pipe(zip('js13k-2020-wizard-with-a-shotgun.zip'))
-        .pipe(advzip({ optimizationLevel: 4, iterations: 200 }))
-        .pipe(s = size({ title: 'zip' }))
-        .pipe(gulp.dest('dist/final'))
-        .on('end', () => {
-            let remaining = (13 * 1024) - s.size;
-            if (remaining < 0) {
-                log.warn(chalk.red(`${-remaining} bytes over`));
-            } else {
-                log.info(chalk.green(`${remaining} bytes remaining`));
-            }
-        });
 }
 
 // -----------------------------------------------------------------------------
@@ -219,8 +188,7 @@ const build = gulp.series(
     buildCss,
     buildHtml,
     copyAssetsToSite,
-    ready,
-    buildZip
+    ready
 );
 
 // -----------------------------------------------------------------------------
@@ -252,7 +220,6 @@ module.exports = {
     buildCss,
     buildAssets,
     buildHtml,
-    buildZip,
 
     // Primary entry points
     build,

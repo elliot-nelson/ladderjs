@@ -1,14 +1,33 @@
 
+// A list of in-game actions that can be performed by the player
+const Action = {
+    UP:    11,
+    DOWN:  12,
+    LEFT:  13,
+    RIGHT: 14,
+    JUMP:  15,
+    STOP:  16,
+    PAUSE: 17
+};
+
+// A list of key code mappings and what action they perform. Here we hard-code it, but
+// you could easily also have the key mappings controlled by settings and let the user
+// configure it.
+const KeyMapping = {
+    KeyW:       Action.UP,
+    KeyS:       Action.DOWN,
+    KeyA:       Action.LEFT,
+    KeyD:       Action.RIGHT,
+    ArrowUp:    Action.UP,
+    ArrowDown:  Action.DOWN,
+    ArrowLeft:  Action.LEFT,
+    ArrowRight: Action.RIGHT,
+    Space:      Action.JUMP
+};
+
 export const Input = {
-    // This is a map of in-game actions to the key codes that can be pressed to trigger them.
-    Action: {
-        UP: ['KeyW', 'ArrowUp'],
-        DOWN: ['KeyS', 'ArrowDown'],
-        LEFT: ['KeyA', 'ArrowLeft'],
-        RIGHT: ['KeyD', 'ArrowRight'],
-        JUMP: ['Space'],
-        PAUSE: ['KeyEsc']
-    },
+    Action,
+    KeyMapping,
 
     init() {
         // Input buffer - new keypress events go into this buffer to be handled
@@ -25,7 +44,8 @@ export const Input = {
             let entry = {
                 at: new Date().getTime(),
                 key: event.key,
-                code: event.code
+                code: event.code,
+                action: Input.KeyMapping[event.code] || Input.Action.STOP
             };
             Input.buffer.push(entry);
             Input.history.push(entry);
