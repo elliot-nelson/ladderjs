@@ -26,7 +26,7 @@ export class Player extends Entity {
         console.log('player constructed', x, y);
     }
 
-    update(move) {
+    update() {
         if (this.state === State.DYING) {
             this.deathStep++;
             if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
@@ -34,27 +34,26 @@ export class Player extends Entity {
 
         if (this.state === State.DYING || this.state === State.DEAD) return;
 
-        let code = Input.lastCodePressed();
+        let action = Input.lastActionPressed();
 
-        if (Input.Action.LEFT.includes(code)) {
+        if (action === Input.Action.LEFT) {
             this.nextState = State.LEFT;
             Input.consume();
-        } else if (Input.Action.RIGHT.includes(code)) {
+        } else if (action === Input.Action.RIGHT) {
             this.nextState = State.RIGHT;
             Input.consume();
-        } else if (Input.Action.UP.includes(code)) {
+        } else if (action === Input.Action.UP) {
             this.nextState = State.UP;
             Input.consume();
-        } else if (Input.Action.DOWN.includes(code)) {
+        } else if (action === Input.Action.DOWN) {
             this.nextState = State.DOWN;
             Input.consume();
-        } else if (Input.Action.JUMP.includes(code)) {
+        } else if (action === Input.Action.JUMP) {
             this.nextState = State.START_JUMP;
             Input.consume();
         }
 
-        if (move)
-            return this.applyMovement(game.session.field);
+        return this.applyMovement(game.session.field);
     }
 
     draw() {

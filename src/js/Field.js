@@ -26,11 +26,11 @@ export class Field {
         this.player = new Player(level.player.x, level.player.y);
     }
 
-    update(move) {
+    update() {
         let oldX = this.player.x, oldY = this.player.y;
 
         // Move player based on user input
-        this.player.update(move);
+        this.player.update();
 
         if (oldX !== this.player.x && oldY === this.player.y) {
             if (this.isDisappearingFloor(oldX, oldY + 1)) {

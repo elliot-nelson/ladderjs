@@ -57,31 +57,22 @@ export class Game {
     }
 
     onFrame() {
-        let frameFps = 60;
-        let gameFps = this.session ? PLAY_SPEEDS[this.playSpeed] : frameFps;
-
+        let desiredFps = this.session ? PLAY_SPEEDS[this.playSpeed] : 60;
         let now = new Date().getTime();
         let lastFrame = this.lastFrame || 0;
-        let lastGameFrame = this.lastGameFrame || 0;
 
-        let move = false;
-
-        if (now - lastFrame >= 1000 / frameFps) {
-            if (now - lastGameFrame >= 1000 / gameFps) {
-                move = true;
-                this.lastGameFrame = now;
-            }
+        if (now - lastFrame >= 1000 / desiredFps) {
+            this.update();
             this.lastFrame = now;
-
-            Viewport.resize();
-            this.update(move);
-            this.draw();
         }
+
+        Viewport.resize();
+        this.draw();
 
         window.requestAnimationFrame(() => this.onFrame());
     }
 
-    update(move) {
+    update() {
         // Pull in frame by frame button pushes / keypresses / mouse clicks
         Input.update();
 
@@ -118,7 +109,7 @@ export class Game {
             this.session = new Session();
         }*/
 
-        if (this.session) this.session.update(move);
+        if (this.session) this.session.update();
 
         // Culling (typically when an entity dies)
 
