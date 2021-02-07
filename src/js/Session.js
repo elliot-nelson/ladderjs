@@ -1,8 +1,9 @@
 
-import { LEVEL_ORDER, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from './Constants';
+import { PLAY_SPEEDS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from './Constants';
 import { Field } from './Field';
 import { Screen } from './Screen';
 import { Input } from './Input';
+import { game } from './Game';
 
 export class Session {
     constructor() {
@@ -14,11 +15,28 @@ export class Session {
     }
 
     update() {
+        // The overall game loop runs at a fixed 60 frames per second, but the Play Speed selected
+        // at the main menu controls how fast the game runs. To accomplish that, we do a second
+        // time check here, and unless this is a "move frame", we skip all the logic related to
+        // moving entities.
+        //
+        // This setup allows us to have things like death animations look the same regardless of
+        // the Play Speed selected.
+        let moveFps = PLAY_SPEEDS[game.playSpeed];
+        let now = new Date().getTime();
+        let lastFrame = this.lastFrame || 0;
+        let moveFrame = false;
+
+        if (now - lastFrame >= 1000 / moveFps) {
+            moveFrame = true;
+            this.lastFrame = now;
+        }
+
         if (!this.field) {
             this.field = new Field(this.levelNumber);
         }
 
-        this.field.update();
+        this.field.update(moveFrame);
 
         let recentKeystrokes = Input.buffer.map(event => event.key).join('').toUpperCase();
 
@@ -53,7 +71,7 @@ export class Session {
     startNextLevel() {
         this.field = undefined;
         this.levelNumber++;
-        if (this.levelNumber % LEVEL_ORDER.length === 0) {
+        if (this.levelNumber % Levels.LEVEL_COUNT === 0) {
             this.levelCycle++;
         }
     }

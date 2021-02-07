@@ -46,22 +46,24 @@ export class Game {
 
     start() {
         this.frame = 0;
-        this.frameTimes = [];
-
+        this.playSpeed = 0;
         this.menu = new MainMenu();
 
-        this.playSpeed = 0;
-
-        this.update();
-        window.requestAnimationFrame((delta) => this.onFrame(delta));
+        window.requestAnimationFrame(() => this.onFrame());
     }
 
     onFrame() {
-        let desiredFps = this.session ? PLAY_SPEEDS[this.playSpeed] : 60;
+        let fps = 60;
         let now = new Date().getTime();
         let lastFrame = this.lastFrame || 0;
 
-        if (now - lastFrame >= 1000 / desiredFps) {
+        // Note: we are using `requestAnimationFrame`, which will call our onFrame handler
+        // 60 times per second in most cases. However, it can be higher (the browser may
+        // respect the user's refresh settings, which could be 120Hz or higher for example).
+        //
+        // It's safest to have a check like we do here, where we explicitly limit the number
+        // of update calls to 60 times per second.
+        if (now - lastFrame >= 1000 / fps) {
             this.update();
             this.lastFrame = now;
         }

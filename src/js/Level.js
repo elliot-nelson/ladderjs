@@ -3,6 +3,7 @@ import LevelData from '../levels/levels.json';
 
 export const Level = {
     LEVELS: LevelData,
+    LEVEL_COUNT: LevelData.length,
 
     load(levelNumber) {
         console.log(Level.LEVELS);

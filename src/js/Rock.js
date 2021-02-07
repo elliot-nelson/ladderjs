@@ -3,8 +3,9 @@ import { State } from './Behavior';
 import { LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
 import { Screen } from './Screen';
+import { game } from './Game';
 
-const DEATH_FRAMES = ['%', ':'];
+const DEATH_FRAMES = ['{', '}', '(', ')', '%', '%', ':', ':'];
 
 export class Rock extends Entity {
     constructor(dispenser) {
@@ -16,13 +17,15 @@ export class Rock extends Entity {
         this.deathStep = 0;
     }
 
-    update(field) {
+    update(field, moveFrame) {
         if (this.state === State.DYING) {
             this.deathStep++;
             if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
         }
 
         if (this.state === State.DYING || this.state === State.DEAD) return;
+
+        if (!moveFrame) return;
 
         if (this.state === State.STOPPED) {
             if (this.x === 0 || !field.emptySpace(this.x - 1, this.y)) {

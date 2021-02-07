@@ -9,7 +9,7 @@ import { Entity } from './Entity';
 import { Screen } from './Screen';
 import { game } from './Game';
 
-const DEATH_FRAMES = ['p', 'b', 'd', 'q', 'p', 'b', 'd', 'q', '-', '-', '_'];
+const DEATH_FRAMES = ['p', 'p', 'b', 'd', 'd', 'q', 'p', 'p', 'b', 'd', 'd', 'q', '-', '-', '_', '_', '_', '_', '_'];
 
 /**
  * Player
@@ -26,13 +26,15 @@ export class Player extends Entity {
         console.log('player constructed', x, y);
     }
 
-    update() {
+    update(field, moveFrame) {
         if (this.state === State.DYING) {
             this.deathStep++;
             if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
         }
 
         if (this.state === State.DYING || this.state === State.DEAD) return;
+
+        if (!moveFrame) return;
 
         let action = Input.lastActionPressed();
 
@@ -53,7 +55,7 @@ export class Player extends Entity {
             Input.consume();
         }
 
-        return this.applyMovement(game.session.field);
+        return this.applyMovement(field);
     }
 
     draw() {

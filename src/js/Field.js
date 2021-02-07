@@ -26,11 +26,11 @@ export class Field {
         this.player = new Player(level.player.x, level.player.y);
     }
 
-    update() {
+    update(moveFrame) {
         let oldX = this.player.x, oldY = this.player.y;
 
         // Move player based on user input
-        this.player.update();
+        this.player.update(this, moveFrame);
 
         if (oldX !== this.player.x && oldY === this.player.y) {
             if (this.isDisappearingFloor(oldX, oldY + 1)) {
@@ -39,66 +39,68 @@ export class Field {
         }
 
         // Check if player should be dead (before moving rocks)
-        this.checkIfPlayerShouldDie(game.session);
+        if (moveFrame) this.checkIfPlayerShouldDie(game.session);
 
         // Move rocks
-        for (let rock of this.rocks) rock.update(this);
+        for (let rock of this.rocks) rock.update(this, moveFrame);
 
         // Check if player should be dead (after moving rocks)
-        this.checkIfPlayerShouldDie(game.session);
+        if (moveFrame) this.checkIfPlayerShouldDie(game.session);
 
-        // Collect statues
-        if (this.isStatue(this.player.x, this.player.y)) {
-            this.layout[this.player.y][this.player.x] = ' ';
-            game.session.updateScore(SCORE_STATUE);
-        }
-
-        // Collect treasure (ends the current level)
-        if (this.isTreasure(this.player.x, this.player.y)) {
-            game.session.startNextLevel();
-        }
-
-        // Interact with trampolines
-        if (this.isTrampoline(this.player.x, this.player.y)) {
-            switch (Math.floor(Math.random() * 5)) {
-                case 0:
-                    this.player.state = State.LEFT;
-                    this.player.nextState = undefined;
-                    break;
-                case 1:
-                    this.player.state = State.RIGHT;
-                    this.player.nextState = undefined;
-                    break;
-                case 2:
-                    this.player.state = State.JUMP_UP;
-                    this.player.nextState = undefined;
-                    this.player.jumpStep = 0;
-                    break;
-                case 3:
-                    this.player.state = State.JUMP_LEFT;
-                    this.player.nextState = State.LEFT;
-                    this.player.jumpStep = 0;
-                    break;
-                case 4:
-                    this.player.state = State.JUMP_RIGHT;
-                    this.player.nextState = State.RIGHT;
-                    this.player.jumpStep = 0;
-                    break;
+        if (moveFrame) {
+            // Collect statues
+            if (this.isStatue(this.player.x, this.player.y)) {
+                this.layout[this.player.y][this.player.x] = ' ';
+                game.session.updateScore(SCORE_STATUE);
             }
-        }
 
-        // Dispense new rocks
-        if (this.rocks.length < 3 && Math.random() > 0.9) {
-            let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
-            this.rocks.push(new Rock(dispenser));
-        }
+            // Collect treasure (ends the current level)
+            if (this.isTreasure(this.player.x, this.player.y)) {
+                game.session.startNextLevel();
+            }
 
-        // Kill dead rocks
-        this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
+            // Interact with trampolines
+            if (this.isTrampoline(this.player.x, this.player.y)) {
+                switch (Math.floor(Math.random() * 5)) {
+                    case 0:
+                        this.player.state = State.LEFT;
+                        this.player.nextState = undefined;
+                        break;
+                    case 1:
+                        this.player.state = State.RIGHT;
+                        this.player.nextState = undefined;
+                        break;
+                    case 2:
+                        this.player.state = State.JUMP_UP;
+                        this.player.nextState = undefined;
+                        this.player.jumpStep = 0;
+                        break;
+                    case 3:
+                        this.player.state = State.JUMP_LEFT;
+                        this.player.nextState = State.LEFT;
+                        this.player.jumpStep = 0;
+                        break;
+                    case 4:
+                        this.player.state = State.JUMP_RIGHT;
+                        this.player.nextState = State.RIGHT;
+                        this.player.jumpStep = 0;
+                        break;
+                }
+            }
 
-        // Kill player
-        if (this.player.state === State.DEAD) {
-            game.session.restartLevel();
+            // Dispense new rocks
+            if (this.rocks.length < 3 && Math.random() > 0.9) {
+                let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
+                this.rocks.push(new Rock(dispenser));
+            }
+
+            // Kill dead rocks
+            this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
+
+            // Kill player
+            if (this.player.state === State.DEAD) {
+                game.session.restartLevel();
+            }
         }
     }
 

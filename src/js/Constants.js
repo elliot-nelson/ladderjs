@@ -2,8 +2,6 @@
  * Constants
  */
 
-export const TITLE = 'WIZARD WITH A SHOTGUN';
-
 // Spritesheet URI (produced during gulp build)
 export const SPRITESHEET_URI = 'sprites.png';
 
@@ -23,20 +21,23 @@ export const CHAR_HEIGHT = 16;
 export const CHARSHEET_WIDTH = 16 * CHAR_WIDTH;
 export const CHARSHEET_HEIGHT = 32 * CHAR_HEIGHT;
 
-// Game constants, copied from the original game
+// Fixed level size
 export const LEVEL_ROWS = 20;
 export const LEVEL_COLS = 79;
 
-// Play speeds, expressed as frames per second. Each number is evenly divisible into 1000ms.
-export const PLAY_SPEEDS = [10, 20, 40, 76, 142];
-
-// Playable levels (see `Levels-gen.js` for the level data)
-export const LEVEL_ORDER = [
-    'Easy Street',
-    'Long Island',
-    'Ghost Town',
-    'Tunnel Vision'
-];
+// Play speeds, expressed as frames per second.
+//
+// According to the original, the play speeds had millisecond delays of:
+//   [100ms, 50ms, 25ms, 13ms, 7ms].
+//
+// This would mean the effective FPS was:
+//   [10, 20, 40, 76, 142].
+//
+// I think this is way too high, and might not be accurate (it doesn't count
+// time spent drawing the screen and running the game's logic, which might
+// be a significant number of milliseconds). From memory, each speed was about
+// 50% faster than the previous one, so that's what I've set here.
+export const PLAY_SPEEDS = [10, 15, 23, 35, 50];
 
 // Score events (note, these are just identifiers for the types of score increases, not
 // actual score values).
