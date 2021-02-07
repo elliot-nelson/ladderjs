@@ -2,7 +2,7 @@
 
 import { Sprite } from './Sprite';
 import { State, JUMP_FRAMES } from './Behavior';
-import { Input } from './input/Input';
+import { Input } from './Input';
 import { Text } from './Text';
 import { LEVEL_ROWS, LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
@@ -34,27 +34,25 @@ export class Player extends Entity {
 
         if (this.state === State.DYING || this.state === State.DEAD) return;
 
-        if (Input.pressed[Input.Action.LEFT]) {
+        let code = Input.lastCodePressed();
+
+        if (Input.Action.LEFT.includes(code)) {
             this.nextState = State.LEFT;
-        }
-
-        if (Input.pressed[Input.Action.RIGHT]) {
+            Input.consume();
+        } else if (Input.Action.RIGHT.includes(code)) {
             this.nextState = State.RIGHT;
-        }
-
-        if (Input.pressed[Input.Action.UP]) {
+            Input.consume();
+        } else if (Input.Action.UP.includes(code)) {
             this.nextState = State.UP;
-        }
-
-        if (Input.pressed[Input.Action.DOWN]) {
+            Input.consume();
+        } else if (Input.Action.DOWN.includes(code)) {
             this.nextState = State.DOWN;
-        }
-
-        if (Input.pressed[Input.Action.JUMP]) {
+            Input.consume();
+        } else if (Input.Action.JUMP.includes(code)) {
             this.nextState = State.START_JUMP;
+            Input.consume();
         }
 
-        console.log(move);
         if (move)
             return this.applyMovement(game.session.field);
     }

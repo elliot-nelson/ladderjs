@@ -1,6 +1,6 @@
 import { Screen } from './Screen';
 import { game } from './Game';
-import { Input } from './input/Input';
+import { Input } from './Input';
 
 export class InstructionsMenu {
     constructor() {

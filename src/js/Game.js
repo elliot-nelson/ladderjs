@@ -1,7 +1,7 @@
 'use strict';
 
 import { Sprite } from './Sprite';
-import { Input } from './input/Input';
+import { Input } from './Input';
 import { Text } from './Text';
 import { Viewport } from './Viewport';
 import { GAME_WIDTH, GAME_HEIGHT, PLAY_SPEEDS } from './Constants';
@@ -85,7 +85,6 @@ export class Game {
         // Pull in frame by frame button pushes / keypresses / mouse clicks
         Input.update();
 
-        this.handleInput();
         /*game.camera.pos.x += 0.1;
         game.camera.pos.y -= 0.1;*/
 
@@ -144,14 +143,6 @@ export class Game {
 
         // Intro screenshake
         if (game.frame === 30) game.screenshakes.push(new ScreenShake(20, 20, 20));
-
-        // Initial "click" to get game started
-        if (Input.pressed[Input.Action.ATTACK] && !game.started) game.started = true;
-
-        if (Input.pressed[Input.Action.ATTACK]) {
-            // make a laser
-            this.laser = 45;
-        }
     }
 
     draw() {
@@ -204,20 +195,6 @@ export class Game {
         if (!this.paused) return;
         this.paused = false;
         Audio.unpause();
-    }
-
-    handleInput() {
-        if (Input.pointer) {
-            let xy = uv2xy(Input.pointer);
-            let qr = xy2qr(xy);
-            this.gridHovered = qr;
-
-            if (Input.pressed[Input.Action.ATTACK]) {
-                this.gridSelected = qr;
-            }
-        } else {
-            this.gridHovered = undefined;
-        }
     }
 
     startSession() {

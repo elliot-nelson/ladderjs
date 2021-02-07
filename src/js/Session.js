@@ -2,7 +2,7 @@
 import { LEVEL_ORDER, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from './Constants';
 import { Field } from './Field';
 import { Screen } from './Screen';
-import { Input } from './input/Input';
+import { Input } from './Input';
 
 export class Session {
     constructor() {

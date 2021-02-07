@@ -1,7 +1,7 @@
 import { Screen } from './Screen';
 import { game } from './Game';
 import { PLAY_SPEEDS } from './Constants';
-import { Input } from './input/Input';
+import { Input } from './Input';
 
 export class MainMenu {
     constructor() {
