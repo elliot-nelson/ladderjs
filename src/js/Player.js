@@ -7,6 +7,7 @@ import { Text } from './Text';
 import { LEVEL_ROWS, LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
 import { Screen } from './Screen';
+import { game } from './Game';
 
 const DEATH_FRAMES = ['p', 'b', 'd', 'q', 'p', 'b', 'd', 'q', '-', '-', '_'];
 
@@ -25,7 +26,7 @@ export class Player extends Entity {
         console.log('player constructed', x, y);
     }
 
-    update(field) {
+    update(move) {
         if (this.state === State.DYING) {
             this.deathStep++;
             if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
@@ -53,7 +54,9 @@ export class Player extends Entity {
             this.nextState = State.START_JUMP;
         }
 
-        return this.applyMovement(field);
+        console.log(move);
+        if (move)
+            return this.applyMovement(game.session.field);
     }
 
     draw() {

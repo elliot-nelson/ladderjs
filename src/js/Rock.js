@@ -10,7 +10,7 @@ export class Rock extends Entity {
     constructor(dispenser) {
         super();
         this.x = dispenser.x;
-        this.y = dispenser.y + 1;
+        this.y = dispenser.y;
         this.state = State.FALLING;
         this.nextState = undefined;
         this.deathStep = 0;

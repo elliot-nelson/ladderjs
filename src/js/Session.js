@@ -13,12 +13,12 @@ export class Session {
         this.nextLife = 100;
     }
 
-    update() {
+    update(move) {
         if (!this.field) {
             this.field = new Field(this.levelNumber);
         }
 
-        this.field.update(this);
+        this.field.update(move);
 
         let recentKeystrokes = Input.buffer.map(event => event.key).join('').toUpperCase();
 

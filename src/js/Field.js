@@ -26,11 +26,11 @@ export class Field {
         this.player = new Player(level.player.x, level.player.y);
     }
 
-    update(session) {
+    update(move) {
         let oldX = this.player.x, oldY = this.player.y;
 
         // Move player based on user input
-        this.player.update(this);
+        this.player.update(move);
 
         if (oldX !== this.player.x && oldY === this.player.y) {
             if (this.isDisappearingFloor(oldX, oldY + 1)) {
@@ -39,23 +39,23 @@ export class Field {
         }
 
         // Check if player should be dead (before moving rocks)
-        this.checkIfPlayerShouldDie(session);
+        this.checkIfPlayerShouldDie(game.session);
 
         // Move rocks
         for (let rock of this.rocks) rock.update(this);
 
         // Check if player should be dead (after moving rocks)
-        this.checkIfPlayerShouldDie(session);
+        this.checkIfPlayerShouldDie(game.session);
 
         // Collect statues
         if (this.isStatue(this.player.x, this.player.y)) {
             this.layout[this.player.y][this.player.x] = ' ';
-            session.updateScore(SCORE_STATUE);
+            game.session.updateScore(SCORE_STATUE);
         }
 
         // Collect treasure (ends the current level)
         if (this.isTreasure(this.player.x, this.player.y)) {
-            session.startNextLevel();
+            game.session.startNextLevel();
         }
 
         // Interact with trampolines
@@ -98,7 +98,7 @@ export class Field {
 
         // Kill player
         if (this.player.state === State.DEAD) {
-            session.restartLevel();
+            game.session.restartLevel();
         }
     }
 
@@ -154,6 +154,7 @@ export class Field {
     }
 
     canClimbUp(x, y) {
+        if (y < 0) return false;
         return ['H', '&', '$'].includes(this.layout[y][x]);
     }
 
@@ -161,7 +162,7 @@ export class Field {
         return ['H', '&', '$', ' ', '^', '.'].includes(this.layout[y][x]);
     }
 
-    checkIfPlayerShouldDie(session) {
+    checkIfPlayerShouldDie() {
         if (this.player.state === State.DYING || this.player.state === State.DEAD) return;
 
         if (this.isFire(this.player.x, this.player.y)) {
@@ -175,9 +176,9 @@ export class Field {
                     this.rocks.splice(i, 1);
                     break;
                 } else if (this.player.y === this.rocks[i].y - 1 && this.emptySpace(this.player.x, this.player.y + 1)) {
-                    session.updateScore(SCORE_ROCK);
+                    game.session.updateScore(SCORE_ROCK);
                 } else if (this.player.y === this.rocks[i].y - 2 && this.emptySpace(this.player.x, this.player.y + 1) && this.emptySpace(this.player.x, this.player.y + 2)) {
-                    session.updateScore(SCORE_ROCK);
+                    game.session.updateScore(SCORE_ROCK);
                 }
             }
         }

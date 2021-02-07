@@ -7,12 +7,8 @@ import { Viewport } from './Viewport';
 import { GAME_WIDTH, GAME_HEIGHT, PLAY_SPEEDS } from './Constants';
 import { rgba, createCanvas, clamp, partialText, uv2xy, xy2qr } from './Util';
 import { Audio } from './Audio';
-import { Movement } from './systems/Movement';
-import { Victory } from './systems/Victory';
 import { Hud } from './Hud';
 import { ScreenShake } from './ScreenShake';
-import { Terrain } from './Terrain';
-import { Field } from './Field';
 import { Screen } from './Screen';
 import { MainMenu } from './MainMenu';
 import { InstructionsMenu } from './InstructionsMenu';
@@ -27,7 +23,6 @@ export class Game {
             await Viewport.init();
             await Screen.init();
             await Sprite.init();
-            await Terrain.init();
             Text.init();
             Hud.init();
             Input.init();
@@ -50,7 +45,6 @@ export class Game {
     }
 
     start() {
-        this.fps = 20;
         this.frame = 0;
         this.frameTimes = [];
 
@@ -63,25 +57,31 @@ export class Game {
     }
 
     onFrame() {
-        // If we're in a menu screen, default to a reasonable 30 FPS.
-        // If we're in a game, use the player's selected play speed.
-        let desiredFps = this.session ? PLAY_SPEEDS[this.playSpeed] : 30;
+        let frameFps = 60;
+        let gameFps = this.session ? PLAY_SPEEDS[this.playSpeed] : frameFps;
+
         let now = new Date().getTime();
         let lastFrame = this.lastFrame || 0;
+        let lastGameFrame = this.lastGameFrame || 0;
 
-        if (now - lastFrame >= 1000 / desiredFps) {
-            this.update();
+        let move = false;
+
+        if (now - lastFrame >= 1000 / frameFps) {
+            if (now - lastGameFrame >= 1000 / gameFps) {
+                move = true;
+                this.lastGameFrame = now;
+            }
             this.lastFrame = now;
+
+            Viewport.resize();
+            this.update(move);
+            this.draw();
         }
 
-        // No matter what the game FPS is, we'll resize and redraw the screen
-        // on every browser animation frame (usually 60 FPS).
-        Viewport.resize();
-        this.draw(Viewport.ctx);
         window.requestAnimationFrame(() => this.onFrame());
     }
 
-    update() {
+    update(move) {
         // Pull in frame by frame button pushes / keypresses / mouse clicks
         Input.update();
 
@@ -119,7 +119,7 @@ export class Game {
             this.session = new Session();
         }*/
 
-        if (this.session) this.session.update();
+        if (this.session) this.session.update(move);
 
         // Culling (typically when an entity dies)
 
@@ -192,105 +192,6 @@ export class Game {
             Viewport.width + this.shadowOffset * 2,
             Viewport.height + this.shadowOffset * 2
         );
-
-        Hud.draw();
-
-        for (let entity of this.entities) {
-            if (entity.z && entity.z > 100) entity.draw();
-        }
-
-        if (game.frame < 120) {
-            Viewport.ctx.fillStyle = rgba(0, 0, 0, 1 - game.frame / 120);
-            Viewport.fillViewportRect();
-        }
-
-        if (game.victory) {
-            Viewport.ctx.fillStyle = rgba(240, 0, 0, clamp(Victory.frame / 1800, 0, 0.7));
-            Viewport.fillViewportRect();
-
-            let text = 'WAIT! THE PORTAL HOME... \n \nIT STINKS LIKE ROTTEN MEAT, BUT IT LOOKS LIKE YOU ARE STUCK IN THE DUNGEONS. \n \nWELCOME HOME...';
-            Text.drawParagraph(
-                Viewport.ctx,
-                partialText(text, Victory.frame, 600),
-                40, 40,
-                Viewport.width - 80,
-                Viewport.ctx.height - 80,
-                2,
-                Text.white,
-                Text.red
-            );
-        }
-
-        if (this.laser === 45) {
-            Audio.play([1.43,,739,.1,.5,.4,2,2.91,,-0.4,,,,,7.2,.1,.04,,,.94]); // Random 219
-        }
-
-        if (this.laser >= 41) {
-            Viewport.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            Viewport.fillViewportRect();
-        } else if (this.laser >= 38) {
-            Viewport.ctx.fillStyle = 'rgba(128, 255, 128, 0.7)';
-            Viewport.fillViewportRect();
-        } else if (this.laser >= 35) {
-            Viewport.ctx.fillStyle = 'rgba(128, 255, 128, 0.5)';
-            Viewport.fillViewportRect();
-        } else if (this.laser >= 32) {
-            Viewport.ctx.fillStyle = 'rgba(128, 255, 128, 0.3)';
-            Viewport.fillViewportRect();
-        }
-
-        /* laser code
-        if (this.laser > 0 && this.laser < 42) {
-            let center = (Viewport.width / 2) | 0, x = 0;
-            for (let y = -5; y < Viewport.height; y++) {
-                let choices = [-1, 0, 0, 1];
-                if (x < -10) choices[0] = 1;
-                if (x > 10) choices[3] = -1;
-
-                //let vx = x + Math.sin(y + ((this.frame / 10) % 10)) * Math.cos(this.frame / 19) * 10;
-                Viewport.ctx.fillStyle = 'rgba(50,200,50,1)';
-                Viewport.ctx.fillRect(center + x - 10, y, this.laser > 35 ? 30 : 20, 1);
-                x += choices[(Math.random() * 4) | 0];
-            }
-        }
-        this.laser--;
-        */
-
-/*
-            for (let i = 0; i < 5; i++) {
-                let column = (Math.random() * Viewport.width) | 0;
-                let row = ((Math.random() * Viewport.height) | 0) - 50;
-                let length = ((Math.random() * 50) | 0) + 50;
-                let color = [
-                    //'rgba(34, 179, 34, 1)',  // base color
-                    'rgba(39, 204, 39, 1)',    // brighter version
-                    'rgba(25, 128, 25, 1)',    // darker version
-                    'rgba(195, 230, 195, 1)'
-                ][(Math.random() * 3) | 0];
-
-                this.laserRand = this.laserRand || [];
-                this.laserRand.push([column, row, length, color, 30]);
-            }
-
-            for (let laser of this.laserRand) {
-                laser[4]--;
-                Viewport.ctx.fillStyle = laser[3];
-                Viewport.ctx.fillRect(laser[0], laser[1], 1, laser[2]);
-
-                laser[1]+=2;
-                console.log(laser[3]);
-            }
-
-            this.laserRand = this.laserRand.filter(l => l[4] > 0);*/
-
-            /*
-            canvas.ctx.fillRect(x, y, 1, 1);
-            src/js/Sprite.js:    canvas.ctx.fillRect(0, 0, 500, 500);
-            src/js/Sprite.js:    canvas.ctx.fillRect(0, 0, 32, 32);
-            src/js/Sprite.js:    canvas.ctx.fillRect(0, 0, source.width, source.height);
-            src/js/Viewport.js:        Viewport.ctx.fillRect(0, 0, Viewport.width, Vi
-                */
-
     }
 
     pause() {
