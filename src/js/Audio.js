@@ -1,6 +1,5 @@
 'use strict';
 
-import { TITLE } from './Constants';
 import { zzfx, zzfxP, zzfxX } from './lib/zzfx';
 import { zzfxM } from './lib/zzfxm';
 import { ObliqueMystique } from './songs/ObliqueMystique';
@@ -24,7 +23,7 @@ export const Audio = {
         Audio.song = zzfxM(...ObliqueMystique);
 
         // Save our background music in os13k, for fun!
-        localStorage[`OS13kMusic,${TITLE} - Oblique Mystique`] = JSON.stringify(ObliqueMystique);
+        //localStorage[`OS13kMusic,${TITLE} - Oblique Mystique`] = JSON.stringify(ObliqueMystique);
     },
 
     update() {

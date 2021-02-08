@@ -43,7 +43,8 @@ async function compileBuild() {
             input: 'src/js/index.js',
             plugins: rollupJson(),
             onwarn: (warning, rollupWarn) => {
-                // Suppress circular dependency spam.
+                // Suppress circular dependency warnings
+                // (I use circular dependencies with wild abandon)
                 if (warning.code !== 'CIRCULAR_DEPENDENCY') {
                     rollupWarn(warning);
                 }
@@ -51,28 +52,32 @@ async function compileBuild() {
         });
 
         await bundle.write({
-            file: 'dist/temp/app.js',
+            file: 'temp/app.js',
             format: 'iife',
             name: 'app',
             sourcemap: 'inline'
         });
     } catch (error) {
         // Use rollup's error output
+        // This hack is for development - I'm using rollup's API here, but I want
+        // the output format of the CLI if I have a compile/syntax error. The line
+        // below invokes the CLI's error handling so I can see the detailed context.
         require('rollup/dist/shared/loadConfigFile').handleError(error, true);
         throw error;
     }
 }
 
 function minifyBuild() {
-    // Fast Mode Shortcut
-
-    let cache = {};
-
     return gulp.src('dist/temp/app.js')
         .pipe(sourcemaps.init({ loadMaps: true }))
-        .pipe(terser({ mangle: false }))
+        .pipe(terser({
+            // I'm using terser to shrink the JS source size down, every little bit helps
+            // for loading speed in the browser -- but we don't need it to be mangled
+            // or intentionally obfuscated.
+            mangle: false
+        }))
         .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/temp'));
+        .pipe(gulp.dest('site/play'));
 }
 
 const buildJs = gulp.series(compileBuild, minifyBuild);
@@ -83,7 +88,7 @@ const buildJs = gulp.series(compileBuild, minifyBuild);
 function buildCss() {
     return gulp.src('src/app.css')
         .pipe(cleancss())
-        .pipe(gulp.dest('dist/build'));
+        .pipe(gulp.dest('site/play'));
 }
 
 // -----------------------------------------------------------------------------
@@ -139,12 +144,6 @@ function copyAssets() {
         .pipe(gulp.dest('dist/temp'));
 }
 
-async function pngoutAssets() {
-    // This step relies on a new tool "pngout", comment out if not available.
-    // This saves me an extra 20 bytes on the spritesheet.
-    childProcess.execSync('pngout dist/temp/sprites.png');
-}
-
 function copyFinalSprites() {
     return gulp.src('dist/temp/sprites.png')
         .pipe(gulp.dest('dist/final'));
@@ -164,18 +163,12 @@ const buildAssets = gulp.series(
 function buildHtml() {
     return gulp.src('src/index.html')
         .pipe(htmlmin({ collapseWhitespace: true }))
-        .pipe(gulp.src('dist/temp/app.js.map'))
-        .pipe(gulp.src('dist/temp/app.js'))
-        .pipe(gulp.dest('dist/build'));
+        .pipe(gulp.dest('site/play'));
 }
 
 // -----------------------------------------------------------------------------
 // Build
 // -----------------------------------------------------------------------------
-function copyAssetsToSite() {
-    return gulp.src('dist/build/*').pipe(gulp.dest('site/play'));
-}
-
 async function ready() {
     if (watching) {
         childProcess.exec('say OK');
@@ -187,7 +180,6 @@ const build = gulp.series(
     buildJs,
     buildCss,
     buildHtml,
-    copyAssetsToSite,
     ready
 );
 
