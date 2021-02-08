@@ -23,10 +23,16 @@ const imageToBase64 = require('image-to-base64');
  *  - Need to be careful with your "gulp watch" filespec to avoid rebuild loops.
  */
 const ImageDataParser = {
-  async parse(dataFile, imageFile, outputFile) {
+  async parse(dataFile, imageFileName, isBase64, outputFile) {
     let data = ImageDataParser._parseDataFile(dataFile);
-    let base64 = await imageToBase64(imageFile);
-    ImageDataParser._writeOutputFile(data, base64, outputFile);
+    let uri = imageFileName;
+
+    if (isBase64) {
+      let base64 = await imageToBase64(imageFileName);
+      uri = `data:image/png;base64,${base64}`;
+    }
+
+    ImageDataParser._writeOutputFile(data, uri, outputFile);
   },
   _parseDataFile(dataFile) {
     let json = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
@@ -48,16 +54,13 @@ const ImageDataParser = {
 
     return data;
   },
-  _writeOutputFile(data, base64, outputFile) {
+  _writeOutputFile(data, uri, outputFile) {
     let js = fs.readFileSync(outputFile, 'utf8');
     let lines = js.split('\n');
     let prefix = lines.findIndex(value => value.match(/<generated>/));
     let suffix = lines.findIndex(value => value.match(/<\/generated>/));
 
-    data = {
-      ...data,
-      base64: `data:image/png;base64,${base64}`
-    };
+    data = { ... data, uri };
 
     let generated = util.inspect(data, { compact: true, maxArrayLength: Infinity, depth: Infinity });
     generated = lines.slice(0, prefix + 1).join('\n') + '\n' + generated + '\n' + lines.slice(suffix).join('\n');

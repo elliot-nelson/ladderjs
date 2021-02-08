@@ -32,7 +32,7 @@ const terser            = require('gulp-terser');
 // Flags
 // -----------------------------------------------------------------------------
 let watching = false;
-let fast = process.argv.includes('--fast');
+let silent = process.argv.includes('--silent');
 
 // -----------------------------------------------------------------------------
 // JS Build
@@ -68,7 +68,7 @@ async function compileBuild() {
 }
 
 function minifyBuild() {
-    return gulp.src('dist/temp/app.js')
+    return gulp.src('temp/app.js')
         .pipe(sourcemaps.init({ loadMaps: true }))
         .pipe(terser({
             // I'm using terser to shrink the JS source size down, every little bit helps
@@ -106,7 +106,7 @@ async function exportSpriteSheet() {
 
     try {
         let r = await AsepriteCli.exec(`--batch ${src} --sheet-type packed --sheet ${png} --data ${data} --format json-array`);
-        console.log(r);
+        log.info(r);
     } catch (e) {
         log.error(e);
         log.warn(chalk.red('Failed to update sprite sheet, but building anyway...'));
@@ -119,42 +119,22 @@ async function generateSpriteSheetData() {
     // hand-edting any coordinate data or worrying about the composition of the spritesheet.
 
     let data = 'src/assets/spritesheet-gen.json';
-    let image = 'dist/temp/sprites.png';
+    let image = 'sprites.png';
     let output = 'src/js/SpriteSheet-gen.js';
 
-    await ImageDataParser.parse(data, image, output);
+    await ImageDataParser.parse(data, image, false, output);
 }
 
 function copyAssets() {
-    let pipeline = gulp.src('src/assets/spritesheet-gen.png')
-        .pipe(size({ title: 'spritesheet  pre' }));
-
-    // Fast Mode Shortcut
-    if (!fast) {
-        pipeline = pipeline
-        .pipe(imagemin())
-        .pipe(imagemin([
-            advpng({ optimizationLevel: 4, iterations: 20 })
-        ]));
-    }
-
-    return pipeline
-        .pipe(size({ title: 'spritesheet post' }))
+    return gulp.src('src/assets/spritesheet-gen.png')
         .pipe(rename('sprites.png'))
-        .pipe(gulp.dest('dist/temp'));
-}
-
-function copyFinalSprites() {
-    return gulp.src('dist/temp/sprites.png')
-        .pipe(gulp.dest('dist/final'));
+        .pipe(gulp.dest('site/play'));
 }
 
 const buildAssets = gulp.series(
     exportSpriteSheet,
     copyAssets,
-    //pngoutAssets,
     generateSpriteSheetData,
-    copyFinalSprites
 );
 
 // -----------------------------------------------------------------------------
@@ -170,8 +150,11 @@ function buildHtml() {
 // Build
 // -----------------------------------------------------------------------------
 async function ready() {
-    if (watching) {
-        childProcess.exec('say OK');
+    if (watching && !silent) {
+        // While running the default "gulp" during development, I like to have a system beep
+        // in the background so I know it's done and the build was successful. Comment out
+        // this line to disable or specify `--silent` on command line.
+        process.stderr.write('\x07Ready!\n');
     }
 }
 
@@ -188,11 +171,6 @@ const build = gulp.series(
 // -----------------------------------------------------------------------------
 function watch() {
     watching = true;
-
-    /*let server = require('http-server').createServer({ root: 'dist/build' });
-    server.listen(8080, '0.0.0.0', () => {
-        console.log(1);
-    });*/
 
     // The watch task watches for any file changes in the src/ folder, _except_ for
     // edits to generated files (called blah-gen by convention).
