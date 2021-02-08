@@ -31,8 +31,6 @@ const terser            = require('gulp-terser');
 // -----------------------------------------------------------------------------
 // Flags
 // -----------------------------------------------------------------------------
-let watching = false;
-let silent = process.argv.includes('--silent');
 
 // -----------------------------------------------------------------------------
 // JS Build
@@ -149,21 +147,11 @@ function buildHtml() {
 // -----------------------------------------------------------------------------
 // Build
 // -----------------------------------------------------------------------------
-async function ready() {
-    if (watching && !silent) {
-        // While running the default "gulp" during development, I like to have a system beep
-        // in the background so I know it's done and the build was successful. Comment out
-        // this line to disable or specify `--silent` on command line.
-        process.stderr.write('\x07Ready!\n');
-    }
-}
-
 const build = gulp.series(
     buildAssets,
     buildJs,
     buildCss,
-    buildHtml,
-    ready
+    buildHtml
 );
 
 // -----------------------------------------------------------------------------

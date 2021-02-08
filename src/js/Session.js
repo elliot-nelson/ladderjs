@@ -4,6 +4,7 @@ import { Field } from './Field';
 import { Screen } from './Screen';
 import { Input } from './Input';
 import { game } from './Game';
+import { Level } from './Level';
 
 export class Session {
     constructor() {
@@ -71,7 +72,7 @@ export class Session {
     startNextLevel() {
         this.field = undefined;
         this.levelNumber++;
-        if (this.levelNumber % Levels.LEVEL_COUNT === 0) {
+        if (this.levelNumber % Level.LEVEL_COUNT === 0) {
             this.levelCycle++;
         }
     }

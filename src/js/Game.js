@@ -67,64 +67,14 @@ export class Game {
         // Pull in frame by frame button pushes / keypresses / mouse clicks
         Input.update();
 
-        /*game.camera.pos.x += 0.1;
-        game.camera.pos.y -= 0.1;*/
-
-        //if (Input.pressed[Input.Action.MENU]) {
-        //    this.paused ? this.unpause() : this.pause();
-        //}
-
-        if (this.paused) return;
-
         // perform any per-frame audio updates
         Audio.update();
-
-        // Behavior (AI, player input, etc.)
-        //perform(this.entities); <-- cut to save space
-
-        // perform any queued damage
-        //Damage.perform(this.entities);
-
-        // Movement (perform entity velocities to position)
-
-        // Dialog scheduling
-        //DialogScheduling.perform();
-
-        // Victory conditions
 
         if (this.menu) {
             this.menu.update();
         }
 
-        /*    if (!this.session) {
-            this.session = new Session();
-        }*/
-
         if (this.session) this.session.update();
-
-        // Culling (typically when an entity dies)
-
-        // Camera logic
-        /*let diff = {
-            x: this.player.pos.x - this.camera.pos.x,
-            y: this.player.pos.y - this.camera.pos.y
-        };*/
-
-        /*
-        this.camera.pos.x += diff.x * 0.2;
-        this.camera.pos.y += diff.y * 0.2;
-        */
-
-        // Tick screenshakes and cull finished screenshakes
-        this.screenshakes = this.screenshakes.filter(screenshake =>
-            screenshake.update()
-        );
-
-        // Flickering shadows
-        if (game.frame % 6 === 0) this.shadowOffset = (Math.random() * 10) | 0;
-
-        // Intro screenshake
-        if (game.frame === 30) game.screenshakes.push(new ScreenShake(20, 20, 20));
     }
 
     draw() {
