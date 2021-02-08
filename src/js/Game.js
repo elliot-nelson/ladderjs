@@ -7,7 +7,6 @@ import { Viewport } from './Viewport';
 import { GAME_WIDTH, GAME_HEIGHT, PLAY_SPEEDS } from './Constants';
 import { rgba, createCanvas, clamp, partialText, uv2xy, xy2qr } from './Util';
 import { Audio } from './Audio';
-import { Hud } from './Hud';
 import { ScreenShake } from './ScreenShake';
 import { Screen } from './Screen';
 import { MainMenu } from './MainMenu';
@@ -23,19 +22,9 @@ export class Game {
             await Viewport.init();
             await Screen.init();
             await Sprite.init();
-            Text.init();
-            Hud.init();
-            Input.init();
-            Audio.init();
-
-            this.entities = [];
-            this.dialogPending = {};
-            this.dialogSeen = {};
-            this.roomsCleared = {};
-            this.shadowOffset = 0;
-            this.screenshakes = [];
-            this.camera = { pos: { x: 0, y: 0 } };
-            this.cameraFocus = { pos: { x: 0, y: 0 } };
+            await Text.init();
+            await Input.init();
+            await Audio.init();
 
             window.addEventListener('blur', () => this.pause());
             window.addEventListener('focus', () => this.unpause());

@@ -19,7 +19,7 @@ export const Sprite = {
     loadSpritesheet(cb) {
         let image = new Image();
         image.onload = cb;
-        image.src = SpriteSheet.base64;
+        image.src = SpriteSheet.uri;
         Sprite.sheet = image;
     },
 
