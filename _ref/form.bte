@@ -1,0 +1,9 @@
+<%bte.doc super="levelPage.bte"%>
+<%bte.tpl name=pageTitle %>$title<%/bte.tpl%>
+<%bte.tpl name=description %>Submit a level for the game of Ladder<%/bte.tpl%>
+<%bte.tpl name=keywords %>submit ladder level<%/bte.tpl%>
+<%bte.tpl name=submitLinkText %><b>Submit</b><%/bte.tpl%>
+<%bte.tpl name=headContent %>$css
+$javascript<%/bte.tpl%>
+<%bte.tpl name=pageContent %>$content<%/bte.tpl%>
+<%/bte.doc%>

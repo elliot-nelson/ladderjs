@@ -1,0 +1,17 @@
+<%bte.doc super="page.bte"%>
+<%bte.tpl name=pageTitle %>External Ladder Resources<%/bte.tpl%>
+<%bte.tpl name=description %>External resources for the game of ladder including bug reporting, javadoc, and source code..<%/bte.tpl%>
+<%bte.tpl name=keywords %>ladder bugs, ladder javadoc, ladder source code<%/bte.tpl%>
+<%bte.tpl name=externalLinkText %><b>Bugs/JavaDoc/Source</b><%/bte.tpl%>
+<%bte.tpl name=pageContent %>
+
+<ul>
+<li><a href="http://lists.sourceforge.net/lists/listinfo/laddergame-updates">Subscribe to Announcements</a></li>
+<li><a href="http://www.gjt.org/servlets/JCVSlet/list/gjt/com/Ostermiller/Ladder/">Browse Source Code</a></li>
+<li><a href="http://www.gjt.org/javadoc/com/Ostermiller/Ladder/package-summary.html">JavaDoc</a></li>
+<li><a href="http://sourceforge.net/tracker/?group_id=53718&atid=471349">Bugs</a></li>
+<li><a href="http://sourceforge.net/tracker/?func=browse&group_id=53718&atid=471352">Feature Requests</a></li>
+</ul>
+
+<%/bte.tpl%>
+<%/bte.doc%>

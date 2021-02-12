@@ -1,0 +1,21 @@
+body { 
+  color:black;
+  background-color:white;  
+}
+#menu, #stuff {
+  display:none;
+}
+table.level {
+  font:monospaced;
+  color:black;
+  font-size:small;
+  border:thin black ridge;
+}
+a:link {
+  color:black;
+  text-decoration:none;
+}
+a:visited {
+  color:black;
+  text-decoration:none;
+}

@@ -1,0 +1,34 @@
+<%bte.doc super="page.bte"%>
+<%bte.tpl name=pageTitle %>Customize Ladder<%/bte.tpl%>
+<%bte.tpl name=description %>Tips and tricks that let you shape the game to your liking.<%/bte.tpl%>
+<%bte.tpl name=keywords %>customize ladder, ladder customization, hacking ladder, modify ladder<%/bte.tpl%>
+<%bte.tpl name=customizeLinkText %><b>Customization</b><%/bte.tpl%>
+<%bte.tpl name=pageContent %>
+<h3>Creating Levels</h3>
+Ladder comes with a level editor and you can create new levels (<a href="levels.html">instructions</a>).
+
+<h3>LadderUser.ini</h3>
+Ladder creates a user configuration file called<br>
+<i>&lt;UserHome&gt;</i>/.java/Ladder/LadderUser.ini. 
+<i>&lt;UserHome&gt;</i> is your home directory, often c:\Windows on Win9x systems, and c:\Documents&nbsp;and&nbsp;Settings\<i>&lt;UserName&gt;</i> on other Windows computers.  You can hack Ladder by adding content to this file.  Values that are in this file override the values in the <a href="http://www.gjt.org/servlets/JCVSlet/log/gjt/com/Ostermiller/Ladder/Ladder.ini/0">default configuration file</a>.
+<h4><a name="addlevel">Add your levels to the game play and menus</a></h4>
+Levels are taken from values that look like<br>
+<b>Level<i>&lt;#&gt;</i>=<i>&lt;File&nbsp;Name&gt;</i></b><br>
+<b>Level1<i>&lt;#&gt;</i>Name=<i>&lt;Name&gt;</i></b><br>
+If you want to add a level, add the line:<br>
+<b>Level15=C:\My&nbsp;Documents\NewLevel.lvl</b><br>
+<b>Level15Name=My&nbsp;New&nbsp;Level</b><br>
+Capitalization matters here.<br>
+If you modified Easy Street and want to use your version, add the line:<br>
+<b>Level1=C:\My&nbsp;Documents\MyEasyStreet.lvl</b><br>
+If you want to replace all the levels with your own, make the file name of the last one blank:<br>
+<b>Level1=C:\My&nbsp;Documents\MyFirst.lvl</b><br>
+<b>Level1Name=My&nbsp;First&nbsp;Level</b><br>
+<b>Level2=C:\My&nbsp;Documents\MySecond.lvl</b><br>
+<b>Level2Name=My&nbsp;Second&nbsp;Level</b><br>
+<b>Level3=C:\My&nbsp;Documents\MyThird.lvl</b><br>
+<b>Level3Name=My&nbsp;Third&nbsp;Level</b><br>
+<b>Level4=</b><br>
+<b>Level4Name=</b><br>
+<%/bte.tpl%>
+<%/bte.doc%>

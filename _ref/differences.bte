@@ -1,0 +1,28 @@
+<%bte.doc super="page.bte"%>
+<%bte.tpl name=pageTitle %>Java Ladder vs CP/M Ladder<%/bte.tpl%>
+<%bte.tpl name=description %>Differences between this version of Ladder and the original CP/M version.<%/bte.tpl%>
+<%bte.tpl name=keywords %>ladder differences, how ladder has changed<%/bte.tpl%>
+<%bte.tpl name=differencesLinkText %><b>Differences from Original</b><%/bte.tpl%>
+<%bte.tpl name=pageContent %>
+<p>This version of Ladder is very similar to the original but there are a few differences.   My goal is to keep the original spirit and game play while making improvements.</p>
+
+<p>Most of the controls for the lad are the same.  The arrow keys still move the lad around, the space bar still make him jump, and any other key will stop him.  Today's computers handle repeat key stokes differently than CPM systems did.  If you hold down the a key there is usually a delay before the second key event is generated.  This means that holding down the space bar to keep jumping probably will not work quite like it should.  Holding down the space bar will cause the lad will jump once, then stop jumping for a second before continuing.  To execute two jumps in a row, the space bar needs to be tapped twice.</p>
+
+<p>The original ladder kept a rather long buffer of keystrokes.  If you held down a key for long enough, eventually your computer would start beeping at you when this buffer filled up.  Furthermore, it would take a few seconds to process all of the keystrokes is the buffer while you couldn't tell the lad to do anything else.   If you held down the space bar you would continue to jump for a while even after you released it.  I found this to be annoying so in this version of ladder only one keystroke is buffered for later use.  Subsequent keystrokes will replace the keystroke in the buffer rather than overflowing the buffer and causing beeps.</p>
+
+<p>If the lad is moving to the left or right, pressing the up arrow key will cause the lad to climb the next arrow key that it encounters.  This feature of the original game was not consistent with other forms of motion.  If you were falling and pressed left or right, you would still stop when you hit the ground.  If you were moving left or right and pressed down, the lad would immediately  stop rather than waiting to go down the next ladder that encountered.  Similarly, when going up ladders if left or right were pressed and the lad was next to a wall, the lad would stop.  If you were climbing a ladder and pressed left or right a moment to soon when you were at the level of the next platform, the lad would get stuck.  In this version, if the lad cannot perform an action at the given time,  he doesn't do anything with the command until such a time as he perform the action.   Some people have written me that they used the down arrow key to stop in the original, they will have to find some other key to use for stopping.</p>
+
+<p>If the lad jumps and hits his head he no longer falls straight down and stops as he would have in the original.  The lad now continues in the direction that he was headed, but his jump is shortened.   This makes it possible to jump barrels even when there is a low ceiling.</p>
+
+<p>Floorboards that disappear when the lad walks on them still work like they used to with one exception.  If the lad walks across a disappearing floor the floor will disappear.  If he jumps across it the floor will remain intact.  In the original, if the lad stopped on a piece of disappearing floorboard, there would be no way to get off of it without it disappearing, even by jumping.  In this version the lad can jump off a disappearing floorboard and it will remain intact. </p>
+
+<h3>Original Authors:</h3>
+
+<p>Ladder was originally written for the CPM operating system and the game
+came bundled with Kaypro computers. It is copyrighted by:</p>
+
+<p>Yahoo Software<br>
+10970 Ashton Ave, Suite 312<br>
+Los Angeles, CA</p>
+<%/bte.tpl%>
+<%/bte.doc%>

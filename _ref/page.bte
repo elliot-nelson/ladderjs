@@ -1,0 +1,91 @@
+<%bte.doc output="false"%>
+<%bte.tpl name=page %><!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head><title><%bte.inc name=pageTitle %></title><%bte.grp onNoResolve=warning %>
+<meta name="description" content="<%bte.inc name=description %>"><%/bte.grp %><%bte.grp onNoResolve=warning %>
+<meta name="keywords" content="<%bte.inc name=keywords %>"><%/bte.grp %>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+<link rel="stylesheet" media="screen" title="Web View" href="style.css" type="text/css">
+<link rel="stylesheet" media="print" href="printable.css" type="text/css">
+<link rel="alternate stylesheet" media="screen" title="Print Preview" href="printable.css" type="text/css">
+<%bte.grp onNoResolve=ok %><%bte.inc name=headContent %><%/bte.grp %>
+</head>
+<body>
+
+<div id=head>
+<div style="float:left;padding-right:1cm;">
+<h1><a name="content"><%bte.inc name=pageTitle %></a></h1>
+</div>
+<div>
+<%bte.inc name=description %>
+</div>
+</div>
+
+<div id=content><%bte.inc name=pageContent %></div>
+
+<div id=menu>
+<ul>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=homeLinkText %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=downloadLinkText %><%/bte.grp %><%bte.grp onNoResolve=ok %>
+<%bte.inc name=downloadLinks %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=instructionsLinkText %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=levelsLinkText %><%/bte.grp %><%bte.grp onNoResolve=ok %>
+<%bte.inc name=levelLinks %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=differencesLinkText %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=customizeLinkText %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=historyLinkText %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=externalLinkText %><%/bte.grp %></li>
+<li><%bte.grp onDefault=ok %><%bte.inc
+name=licenseLinkText %><%/bte.grp %></li>
+</ul>
+</div>
+
+<div id=foot>
+<p>Copyright &copy; <a href="http://ostermiller.org/contact.pl?regarding=Ladder" class=mail>Stephen Ostermiller</a> 1999-2020</p>
+<p style="text-align:right;font-size:smaller"><a href="http://ostermiller.org/">ostermiller.org</a> (<a href="http://ostermiller.org/siteindex.html">site index</a>)</p>
+</div>
+
+<div id=stuff>
+<%bte.grp onDefault=ok %><%bte.inc name=googleskyscraper %><%/bte.grp %>
+</div>
+
+</body>
+</html><%/bte.tpl%>
+<%bte.tpl name=homeLinkText %><a href="./">Ladder</a><%/bte.tpl%>
+<%bte.tpl name=levelsLinkText %><a href="levels.html">Levels</a><%/bte.tpl%>
+<%bte.tpl name=differencesLinkText %><a href="differences.html">Differences from Original</a><%/bte.tpl%>
+<%bte.tpl name=downloadLinkText %><a href="download.html">Download</a><%/bte.tpl%>
+<%bte.tpl name=instructionsLinkText %><a href="instructions.html">Instructions</a><%/bte.tpl%>
+<%bte.tpl name=historyLinkText %><a href="history.html">Version History</a><%/bte.tpl%>
+<%bte.tpl name=licenseLinkText %><a href="license.html">License</a><%/bte.tpl%>
+<%bte.tpl name=customizeLinkText %><a href="customize.html">Customization</a><%/bte.tpl%>
+<%bte.tpl name=externalLinkText %><a href="external.html">Bugs/JavaDoc/Source</a><%/bte.tpl%>
+
+
+<%bte.tpl name=googleskyscraper %>
+<script type="text/javascript"><!--
+google_ad_client = "pub-2385172974335864";
+google_ad_width = 120;
+google_ad_height = 600;
+google_ad_format = "120x600_as";
+google_ad_type = "text";
+google_ad_channel ="";
+google_color_border = "000000";
+google_color_bg = "000000";
+google_color_link = "00FF00";
+google_color_url = "00FF00";
+google_color_text = "00FF00";
+//--></script>
+<script type="text/javascript"
+  src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
+</script>
+<%/bte.tpl%>
+<%/bte.doc%>
