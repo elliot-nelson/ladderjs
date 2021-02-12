@@ -62,9 +62,5 @@ export const Viewport = {
 
         // We do this every frame, not just on resize, due to browser sometimes "forgetting".
         //Viewport.canvas.style.cursor = 'none';
-    },
-
-    fillViewportRect() {
-        Viewport.ctx.fillRect(0, 0, Viewport.width, Viewport.height);
     }
 };

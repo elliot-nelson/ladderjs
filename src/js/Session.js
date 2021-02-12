@@ -1,5 +1,5 @@
 
-import { PLAY_SPEEDS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from './Constants';
+import { PLAY_SPEEDS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE, HIDDEN_FACTOR_PLAY_SPEED, HIDDEN_FACTOR_MAX_ROCKS } from './Constants';
 import { Field } from './Field';
 import { Screen } from './Screen';
 import { Input } from './Input';
@@ -23,23 +23,19 @@ export class Session {
         //
         // This setup allows us to have things like death animations look the same regardless of
         // the Play Speed selected.
-        let moveFps = PLAY_SPEEDS[game.playSpeed];
         let now = new Date().getTime();
         let lastFrame = this.lastFrame || 0;
         let moveFrame = false;
 
-        if (now - lastFrame >= 1000 / moveFps) {
+        if (now - lastFrame >= (this.nextFrame || 0)) {
             moveFrame = true;
-            this.lastFrame = now;
+            this.nextFrame = now + this.moveFrameMillisecondDelay();
         }
 
-        if (!this.field) {
-            this.field = new Field(this.levelNumber);
-        }
-
+        if (!this.field) this.field = new Field(this.levelNumber);
         this.field.update(moveFrame);
 
-        let recentKeystrokes = Input.buffer.map(event => event.key).join('').toUpperCase();
+        let recentKeystrokes = Input.history.map(event => event.key).join('').toUpperCase();
 
         if (recentKeystrokes.match(/IDCLEV(\d\d)/)) {
             Input.consume();
@@ -48,6 +44,9 @@ export class Session {
         } else if (recentKeystrokes.includes("IDDQD")) {
             Input.consume();
             console.log("god mode");
+        } else if (recentKeystrokes.includes("IDKFA")) {
+            this.field.winning = true;
+            Input.consume();
         }
     }
 
@@ -59,10 +58,10 @@ export class Session {
         let stat = [
             String(this.lives).padStart(2, ' '),
             String(this.levelNumber + 1).padStart(2, ' '),
-            String(this.score).padStart(4, '0'),
+            String(this.score).padStart(6, ' '),
             this.field ? String(this.field.time).padStart(4, ' ') : ''
         ];
-        Screen.write(0, 21, `Lads   ${stat[0]}   Level   ${stat[1]}    Score   ${stat[2]}    Bonus time   ${stat[3]}`);
+        Screen.write(0, 21, `Lads   ${stat[0]}     Level   ${stat[1]}      Score   ${stat[2]}      Bonus time   ${stat[3]}`);
     }
 
     restartLevel() {
@@ -80,15 +79,27 @@ export class Session {
     updateScore(scoreType) {
         switch (scoreType) {
             case SCORE_ROCK:
-                this.score += 2;
+                this.score += 200;
                 break;
             case SCORE_STATUE:
                 this.score += this.field.time;
                 break;
             case SCORE_TREASURE:
-                // Called repeatedly during the end-of-level event.
-                this.score += 1;
+                // Added repeatedly after winning the level
+                this.score += 10;
                 break;
         }
+    }
+
+    hiddenFactor() {
+        // This "hidden" difficulty level increases steadily as the player completes a
+        // level cycle (every time they reach the Easy Street level). This makes the
+        // game slowly harder as you keep playing.
+        return Math.floor(this.levelNumber / Level.LEVEL_COUNT);
+    }
+
+    moveFrameMillisecondDelay() {
+        // Regardless of play speed, the game gets slightly faster every level cycle
+        return Math.floor(PLAY_SPEEDS[game.playSpeed] - this.hiddenFactor() * HIDDEN_FACTOR_PLAY_SPEED * PLAY_SPEEDS[game.playSpeed]);
     }
 }

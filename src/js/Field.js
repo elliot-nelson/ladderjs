@@ -1,7 +1,7 @@
 import { Text } from './Text';
 import { Player } from './Player';
 import { Rock } from './Rock';
-import { LEVEL_COLS, LEVEL_ROWS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE } from './Constants';
+import { LEVEL_COLS, LEVEL_ROWS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE, MAX_ROCKS, DISPENSER_MAX_ROCKS, HIDDEN_FACTOR_MAX_ROCKS } from './Constants';
 import { game } from './Game';
 import { State } from './Behavior';
 import { Screen } from './Screen';
@@ -18,15 +18,31 @@ export class Field {
     constructor(levelNumber) {
         let level = Level.load(levelNumber);
 
+        // Store level-related info
         this.layout = level.layout;
         this.dispensers = level.dispensers;
-        this.time = level.time;
-        this.maxRocks = level.rocks;
-        this.rocks = [];
+        this.time = 2000;
+
+        // Initialize player
         this.player = new Player(level.player.x, level.player.y);
+
+        // Initialize list of rocks (empty)
+        this.rocks = [];
+
+        // Not winning yet (while "winning" the player stops moving and we add up the bonus score)
+        this.winning = false;
     }
 
     update(moveFrame) {
+        if (this.winning) {
+            game.session.updateScore(SCORE_TREASURE);
+            this.time -= 10;
+            if (this.time < 0) game.session.startNextLevel();
+            return;
+        }
+
+        if (this.time > 0 && moveFrame) this.time--;
+
         let oldX = this.player.x, oldY = this.player.y;
 
         // Move player based on user input
@@ -56,7 +72,8 @@ export class Field {
 
             // Collect treasure (ends the current level)
             if (this.isTreasure(this.player.x, this.player.y)) {
-                game.session.startNextLevel();
+                this.winning = true;
+                return;
             }
 
             // Interact with trampolines
@@ -88,14 +105,14 @@ export class Field {
                 }
             }
 
+            // Kill dead rocks
+            this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
+
             // Dispense new rocks
-            if (this.rocks.length < 3 && Math.random() > 0.9) {
+            if (this.rocks.length < this.maxRocks() && Math.random() > 0.91) {
                 let dispenser = this.dispensers[Math.floor(Math.random() * this.dispensers.length)];
                 this.rocks.push(new Rock(dispenser));
             }
-
-            // Kill dead rocks
-            this.rocks = this.rocks.filter(rock => rock.state !== State.DEAD);
 
             // Kill player
             if (this.player.state === State.DEAD) {
@@ -171,6 +188,10 @@ export class Field {
             this.player.state = State.DYING;
         }
 
+        if (this.time <= 0) {
+            this.player.state = State.DYING;
+        }
+
         for (let i = 0; i < this.rocks.length; i++) {
             if (this.player.x === this.rocks[i].x) {
                 if (this.player.y === this.rocks[i].y) {
@@ -184,5 +205,9 @@ export class Field {
                 }
             }
         }
+    }
+
+    maxRocks() {
+        return MAX_ROCKS + this.dispensers.length * DISPENSER_MAX_ROCKS + game.session.hiddenFactor() * HIDDEN_FACTOR_MAX_ROCKS;
     }
 }

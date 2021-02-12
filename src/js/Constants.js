@@ -37,10 +37,22 @@ export const LEVEL_COLS = 79;
 // time spent drawing the screen and running the game's logic, which might
 // be a significant number of milliseconds). From memory, each speed was about
 // 50% faster than the previous one, so that's what I've set here.
-export const PLAY_SPEEDS = [10, 15, 23, 35, 50];
+export const PLAY_SPEEDS = [120, 100, 90, 50, 30];
+
+// Maximum number of rocks on screen at once
+export const MAX_ROCKS = 7;
+
+// Each dispenser on the level increases max rocks by 1
+export const DISPENSER_MAX_ROCKS = 1;
+
+// Hidden difficulty factor - the game gets 5% faster each level cycle
+export const HIDDEN_FACTOR_PLAY_SPEED = 0.05;
+
+// Hidden difficulty factor - the maximum number of rocks increases each level cycle
+export const HIDDEN_FACTOR_MAX_ROCKS = 2;
 
 // Score events (note, these are just identifiers for the types of score increases, not
 // actual score values).
-export const SCORE_ROCK = 0
-export const SCORE_STATUE = 1
-export const SCORE_TREASURE = 2
+export const SCORE_ROCK = 1;
+export const SCORE_STATUE = 2;
+export const SCORE_TREASURE = 3;

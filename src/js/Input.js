@@ -1,13 +1,14 @@
 
 // A list of in-game actions that can be performed by the player
 const Action = {
-    UP:    11,
-    DOWN:  12,
-    LEFT:  13,
-    RIGHT: 14,
-    JUMP:  15,
-    STOP:  16,
-    PAUSE: 17
+    UP:     11,
+    DOWN:   12,
+    LEFT:   13,
+    RIGHT:  14,
+    JUMP:   15,
+    STOP:   16,
+    PAUSE:  17,
+    RESUME: 18
 };
 
 // A list of key code mappings and what action they perform. Here we hard-code it, but
@@ -22,7 +23,9 @@ const KeyMapping = {
     ArrowDown:  Action.DOWN,
     ArrowLeft:  Action.LEFT,
     ArrowRight: Action.RIGHT,
-    Space:      Action.JUMP
+    Space:      Action.JUMP,
+    Escape:     Action.PAUSE,
+    Enter:      Action.RESUME
 };
 
 export const Input = {
