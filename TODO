@@ -1,4 +1,3 @@
-- End of level scoring
 - Allow buffering of jump direction inputs
 - Write useful docs site
 - Work on "background color"
@@ -6,3 +5,7 @@
 - Alternate "modes"?
 - Pause game and unpause game
 - Main Menu insults
+- end of level insults
+- high score handling
+- exit back to main menu when game over
+- clean up unused Util code
