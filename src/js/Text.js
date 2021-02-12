@@ -1,15 +1,22 @@
-'use strict';
+/**
+ * `Text` is a singleton responsible for drawing text characters on the viewport. This
+ * game uses a custom pixel font, so we need to implement some basic text handling
+ * (splitting long lines, measuring character width, etc.) ourselves.
+ */
 
 import { Sprite } from './Sprite';
 import { rgba, createCanvas } from './Util';
 import { CHAR_WIDTH, CHAR_HEIGHT, CHARSHEET_WIDTH } from './Constants';
 import { Viewport } from './Viewport';
 
-
 // In our character sheet, chars 0x00-0x7F are standard ASCII, below that we put whatever
 // characters are convenient for us. Here we can choose to map unicode characters to positions
 // 0x80+ in the charsheet, making it easy for us to render things like special characters,
 // box drawing characters, etc.
+//
+// Note: I like pasting actual characters instead of codes ("├" instead of "\u251C"). If you
+// do this, don't forget to explicitly tell the browser what charset your JS file is, or it
+// won't execute -- see `index.html` for an example.
 const SUPPORTED_UNICODE_CHARS = [
     '─│┌┐└┘├┤┬┴┼╳╳╳╳╳',
     '═║╔╗╚╝╠╣╦╩╬╳╳╳╳╳',

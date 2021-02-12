@@ -1,8 +1,8 @@
 
 // This is our list of STATES. Each entity starts out in one of these states and can move between
-// them based on events that happen in the game. (Note that some of these are directions, but
+// them based on events that happen in the Game (Note that some of these are directions, but
 // since an entity keeps moving in the direction it is going unless stopped, directions are
-// states in this game.)
+// states in this Game)
 export const State = {
     STOPPED:    1,         // Standing still
     UP:         2,         // Moving up (player only)

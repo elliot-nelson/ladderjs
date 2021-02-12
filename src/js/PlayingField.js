@@ -1,20 +1,20 @@
-import { Text } from './Text';
+/**
+ * `PlayingField` is a class that represents a level that is actively being played on-screen.
+ * A new one is created by the game session any time we start a new level.
+ *
+ * Level-specific stuff (like bonus time, dispensers, rocks, player position, etc.) is all
+ * managed by the playing field.
+ */
+
+import { LEVEL_COLS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE, MAX_ROCKS, DISPENSER_MAX_ROCKS, HIDDEN_FACTOR_MAX_ROCKS } from './Constants';
+import { Game } from './Game';
 import { Player } from './Player';
 import { Rock } from './Rock';
-import { LEVEL_COLS, LEVEL_ROWS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE, MAX_ROCKS, DISPENSER_MAX_ROCKS, HIDDEN_FACTOR_MAX_ROCKS } from './Constants';
-import { game } from './Game';
 import { State } from './Behavior';
 import { Screen } from './Screen';
 import { Level } from './Level';
 
-/**
- * Field
- *
- * The "field" represents the current level, or, "playing field". A new playing field is created
- * every time you start a level, so we attach everything about the currently played level to
- * the field -- positions of treasure, the player, victory conditions, etc.
- */
-export class Field {
+export class PlayingField {
     constructor(levelNumber) {
         let level = Level.load(levelNumber);
 
@@ -34,13 +34,16 @@ export class Field {
     }
 
     update(moveFrame) {
+        // If we're already winning, keep counting down the bonus time, but
+        // no more movement will happen on this level.
         if (this.winning) {
-            game.session.updateScore(SCORE_TREASURE);
+            Game.session.updateScore(SCORE_TREASURE);
             this.time -= 10;
-            if (this.time < 0) game.session.startNextLevel();
+            if (this.time < 0) Game.session.startNextLevel();
             return;
         }
 
+        // Count down bonus time
         if (this.time > 0 && moveFrame) this.time--;
 
         let oldX = this.player.x, oldY = this.player.y;
@@ -48,6 +51,7 @@ export class Field {
         // Move player based on user input
         this.player.update(this, moveFrame);
 
+        // Any time you move OFF of a disappearing floor, it goes away.
         if (oldX !== this.player.x && oldY === this.player.y) {
             if (this.isDisappearingFloor(oldX, oldY + 1)) {
                 this.layout[oldY + 1][oldX] = ' ';
@@ -55,19 +59,19 @@ export class Field {
         }
 
         // Check if player should be dead (before moving rocks)
-        if (moveFrame) this.checkIfPlayerShouldDie(game.session);
+        if (moveFrame) this.checkIfPlayerShouldDie(Game.session);
 
         // Move rocks
         for (let rock of this.rocks) rock.update(this, moveFrame);
 
         // Check if player should be dead (after moving rocks)
-        if (moveFrame) this.checkIfPlayerShouldDie(game.session);
+        if (moveFrame) this.checkIfPlayerShouldDie(Game.session);
 
         if (moveFrame) {
             // Collect statues
             if (this.isStatue(this.player.x, this.player.y)) {
                 this.layout[this.player.y][this.player.x] = ' ';
-                game.session.updateScore(SCORE_STATUE);
+                Game.session.updateScore(SCORE_STATUE);
             }
 
             // Collect treasure (ends the current level)
@@ -116,7 +120,7 @@ export class Field {
 
             // Kill player
             if (this.player.state === State.DEAD) {
-                game.session.restartLevel();
+                Game.session.restartLevel();
             }
         }
     }
@@ -131,6 +135,11 @@ export class Field {
         // Draw rocks
         this.rocks.forEach(rock => rock.draw());
     }
+
+    //
+    // Utility functions - this is an attempt to consolidate logic in one spot and make other
+    // functions (like the update logic in Player) more readable.
+    //
 
     onSolid(x, y) {
         return ['=', '-', 'H', '|'].includes(this.layout[y + 1][x]) || this.layout[y][x] === 'H';
@@ -182,16 +191,40 @@ export class Field {
     }
 
     checkIfPlayerShouldDie() {
+        // If we're ALREADY dying or dead, let nature run its course
         if (this.player.state === State.DYING || this.player.state === State.DEAD) return;
 
+        // Landing on fire kills you
         if (this.isFire(this.player.x, this.player.y)) {
             this.player.state = State.DYING;
         }
 
+        // Running out of time kills you
         if (this.time <= 0) {
             this.player.state = State.DYING;
         }
 
+        // Running into a rock kills you, and makes the rock that killed you disappear.
+        // That's not necessary, I just think it looks better. While we play the death
+        // animation we'll continue to move rocks, so another rock might also "hit" you,
+        // but it will just pass through your dying character.
+        //
+        // If we're above a rock with 1 or 2 spaces between, we get some points instead.
+        //
+        // A function named `checkIfPlayerShouldDie` is probably not the best place to do
+        // this, but it's convenient because we want to do this twice (just like the death
+        // check).
+        //
+        //                    p                          p
+        // (1)   p     -->            (2)   p     -->
+        //        o          o                o          o
+        //      =====       =====          =====       =====
+        //
+        // In situation (1), there will never be a frame on-screen where the player is directly
+        // above the rock, but we'll still count it because we'll check once after the player moves.
+        // In situation (2), the first check won't count, but the second check after the rocks move
+        // will give the score (and the frame drawn on screen will show the player above the rock).
+        //
         for (let i = 0; i < this.rocks.length; i++) {
             if (this.player.x === this.rocks[i].x) {
                 if (this.player.y === this.rocks[i].y) {
@@ -199,15 +232,18 @@ export class Field {
                     this.rocks.splice(i, 1);
                     break;
                 } else if (this.player.y === this.rocks[i].y - 1 && this.emptySpace(this.player.x, this.player.y + 1)) {
-                    game.session.updateScore(SCORE_ROCK);
+                    Game.session.updateScore(SCORE_ROCK);
                 } else if (this.player.y === this.rocks[i].y - 2 && this.emptySpace(this.player.x, this.player.y + 1) && this.emptySpace(this.player.x, this.player.y + 2)) {
-                    game.session.updateScore(SCORE_ROCK);
+                    Game.session.updateScore(SCORE_ROCK);
                 }
             }
         }
     }
 
     maxRocks() {
-        return MAX_ROCKS + this.dispensers.length * DISPENSER_MAX_ROCKS + game.session.hiddenFactor() * HIDDEN_FACTOR_MAX_ROCKS;
+        // The total number of rocks we can have on screen is based on a global max rocks value,
+        // then increased slightly by the number of dispensers on the level, then increased again
+        // by a hidden difficulty factor (level cycles).
+        return MAX_ROCKS + this.dispensers.length * DISPENSER_MAX_ROCKS + Game.session.hiddenFactor() * HIDDEN_FACTOR_MAX_ROCKS;
     }
 }

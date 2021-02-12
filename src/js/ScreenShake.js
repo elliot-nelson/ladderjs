@@ -1,4 +1,4 @@
-// https://jonny.morrill.me/en/blog/gamedev-how-to-implement-a-camera-shake-effect/
+// https://jonny.morrill.me/en/blog/Game.dev-how-to-implement-a-camera-shake-effect/
 
 /**
  * Shake it baby.

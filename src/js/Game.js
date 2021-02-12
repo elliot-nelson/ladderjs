@@ -1,21 +1,19 @@
-'use strict';
+/**
+ * `Game` is a singleton that represents the running game in the browser,
+ * initializes game submodules, and handles the top-level game loop.
+ */
 
 import { Sprite } from './Sprite';
 import { Input } from './Input';
 import { Text } from './Text';
 import { Viewport } from './Viewport';
 import { GAME_WIDTH, GAME_HEIGHT, PLAY_SPEEDS } from './Constants';
-import { rgba, createCanvas, clamp, partialText, uv2xy, xy2qr } from './Util';
 import { Audio } from './Audio';
-import { ScreenShake } from './ScreenShake';
 import { Screen } from './Screen';
 import { MainMenu } from './MainMenu';
 import { InstructionsMenu } from './InstructionsMenu';
-import { Session } from './Session';
+import { GameSession } from './GameSession';
 
-/**
- * Game state.
- */
 export class Game {
     init() {
         Sprite.loadSpritesheet(async () => {
@@ -81,40 +79,21 @@ export class Game {
         // Reset canvas transform and scale
         Viewport.ctx.setTransform(Viewport.scale, 0, 0, Viewport.scale, 0, 0);
 
+        // Clear canvas
         Viewport.ctx.fillStyle = 'black';
         Viewport.ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
+        // Center the 80x25 character "screen" in the viewport
         Viewport.ctx.translate((Viewport.width - GAME_WIDTH) / 2 | 0, (Viewport.height - GAME_HEIGHT) / 2 | 0);
 
+        // Hand off control to our submodules to draw whatever they'd like. For all the submodules
+        // below us, "drawing" means writing text to the Screen.
+        Screen.clear();
         if (this.session) this.session.draw();
         if (this.menu) this.menu.draw();
 
+        // Render the text on the screen to the viewport.
         Screen.drawToViewport();
-
-        return;
-
-        // Render screenshakes (canvas translation)
-        let shakeX = 0, shakeY = 0;
-        this.screenshakes.forEach(shake => {
-            shakeX += shake.x;
-            shakeY += shake.y;
-        });
-        Viewport.ctx.translate(shakeX, shakeY);
-
-        //Maze.draw();
-
-        for (let entity of this.entities) {
-            if (!entity.z || entity.z < 100) entity.draw();
-        }
-
-        Viewport.ctx.drawImage(
-            Sprite.shadow.img,
-            0, 0,
-            500, 500,
-            -this.shadowOffset, -this.shadowOffset,
-            Viewport.width + this.shadowOffset * 2,
-            Viewport.height + this.shadowOffset * 2
-        );
     }
 
     pause() {
@@ -131,7 +110,7 @@ export class Game {
 
     startSession() {
         this.menu = undefined;
-        this.session = new Session();
+        this.session = new GameSession();
     }
 
     showMainMenu() {
@@ -144,5 +123,3 @@ export class Game {
         this.session = undefined;
     }
 }
-
-export const game = new Game();

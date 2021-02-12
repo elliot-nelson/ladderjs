@@ -1,6 +1,6 @@
 'use strict';
 
-import { game } from './Game';
+import { Game } from './Game';
 import { rgba, createCanvas } from './Util';
 import { SpriteSheet } from './SpriteSheet-gen';
 import { Viewport } from './Viewport';
@@ -61,8 +61,8 @@ export const Sprite = {
 
     viewportSprite2uv(sprite, pos) {
         return {
-            u: pos.x - sprite.anchor.x - game.camera.pos.x + Viewport.center.u,
-            v: pos.y - sprite.anchor.y - game.camera.pos.y + Viewport.center.v
+            u: pos.x - sprite.anchor.x - Game.camera.pos.x + Viewport.center.u,
+            v: pos.y - sprite.anchor.y - Game.camera.pos.y + Viewport.center.v
         };
     }
 };

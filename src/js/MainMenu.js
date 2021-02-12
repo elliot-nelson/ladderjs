@@ -1,5 +1,5 @@
 import { Screen } from './Screen';
-import { game } from './Game';
+import { Game } from './Game';
 import { PLAY_SPEEDS } from './Constants';
 import { Input } from './Input';
 
@@ -11,19 +11,19 @@ export class MainMenu {
         switch (Input.lastKeyPressed().toUpperCase()) {
             case 'P':
                 Input.consume();
-                game.startSession();
+                Game.startSession();
                 break;
             case 'L':
                 Input.consume();
-                game.playSpeed = (game.playSpeed + 1) % PLAY_SPEEDS.length;
+                Game.playSpeed = (Game.playSpeed + 1) % PLAY_SPEEDS.length;
                 break;
             case 'I':
                 Input.consume();
-                game.showInstructions();
+                Game.showInstructions();
                 break;
             case 'E':
                 Input.consume();
-                game.showInstructions();
+                Game.showInstructions();
                 break;
         }
     }
@@ -52,7 +52,7 @@ export class MainMenu {
             ``,
             `                                       Version:    ${version}`,
             `(c) 1982, 1983 Yahoo Software          Terminal:   ${terminal}`,
-            `10970 Ashton Ave.  Suite 312           Play speed: ${game.playSpeed + 1} / ${PLAY_SPEEDS.length}`,
+            `10970 Ashton Ave.  Suite 312           Play speed: ${Game.playSpeed + 1} / ${PLAY_SPEEDS.length}`,
             `Los Angeles, Ca  90024                 Move = ↑↓←→/WASD, Jump = Space,`,
             `                                       Stop = Other`,
             ``,

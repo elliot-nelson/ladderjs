@@ -1,5 +1,5 @@
 import { Screen } from './Screen';
-import { game } from './Game';
+import { Game } from './Game';
 import { Input } from './Input';
 
 export class InstructionsMenu {
@@ -9,7 +9,7 @@ export class InstructionsMenu {
     update() {
         if (Input.lastKeyPressed().toUpperCase() !== '') {
             Input.consume();
-            game.showMainMenu();
+            Game.showMainMenu();
         }
     }
 
@@ -30,7 +30,7 @@ export class InstructionsMenu {
             `statues (shown as &).  You will receive the bonus time points`,
             `that are left when you have finished the level.`,
             ``,
-            `Type an ESCape to pause the game.`,
+            `Type an ESCape to pause the Game`,
             ``,
             `Remember, there is more than one way to skin a cat. (Chum)`,
             ``,

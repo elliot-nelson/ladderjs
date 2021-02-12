@@ -1,3 +1,10 @@
+/**
+ * `Screen` is a singleton that represents the virtual 80x25 character screen our game
+ * lives in. Components like PlayingField will "draw" (write text onto) this virtual
+ * screen each frame. Once all the text is written, the text will end up rendered on
+ * the viewport (canvas) in the browser.
+ */
+
 import { SCREEN_WIDTH, SCREEN_HEIGHT } from './Constants';
 import { Viewport } from './Viewport';
 import { Text } from './Text';

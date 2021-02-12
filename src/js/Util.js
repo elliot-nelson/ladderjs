@@ -1,6 +1,6 @@
 'use strict';
 
-import { game } from './Game';
+import { Game } from './Game';
 import { Viewport } from './Viewport';
 
 export function qr2xy(pos) {
@@ -20,15 +20,15 @@ export function xy2qr(pos) {
 
 export function xy2uv(pos) {
     return {
-        u: pos.x + Viewport.center.u - game.camera.pos.x,
-        v: pos.y + Viewport.center.v - game.camera.pos.y
+        u: pos.x + Viewport.center.u - Game.camera.pos.x,
+        v: pos.y + Viewport.center.v - Game.camera.pos.y
     };
 }
 
 export function uv2xy(pos) {
     return {
-        x: pos.u - Viewport.center.u + game.camera.pos.x,
-        y: pos.v - Viewport.center.v + game.camera.pos.y
+        x: pos.u - Viewport.center.u + Game.camera.pos.x,
+        y: pos.v - Viewport.center.v + Game.camera.pos.y
     };
 }
 
@@ -40,67 +40,9 @@ export function qrs2qr(pos) {
     return { q: pos.q, r: pos.r };
 }
 
-// When you "round" a fractional hexagonal value to an integer one (usually to convert
-// a mouse click to a hex grid), you can't just `Math.floor()` like you can with standard
-// square tiles - you'll never get the behavior right on the angled sides of the hexagons.
-//
-// To get the behavior you want, you need to convert to cubed coordinates (q,r,s), then
-// individually round each one and eliminate the one furthest away from your original value.
-export function qrRounded(pos) {
-    let qrsA = qr2qrs(pos),
-        qrsB = {
-            q: Math.round(qrsA.q),
-            r: Math.round(qrsA.r),
-            s: Math.round(qrsA.s)
-        },
-        diffQ = Math.abs(qrsA.q - qrsB.q),
-        diffR = Math.abs(qrsA.r - qrsB.r),
-        diffS = Math.abs(qrsA.s - qrsB.s);
-
-    if (diffQ > diffR && diffQ > diffS) {
-        qrsB.q = -qrsB.r-qrsB.s;
-    } else if (diffR > diffS) {
-        qrsB.r = -qrsB.q-qrsB.s;
-    } else {
-        qrsB.s = -qrsB.q-qrsB.r;
-    }
-
-    return qrs2qr(qrsB);
-}
-
-export function clamp(value, min, max) {
-    return value < min ? min : value > max ? max : value;
-}
-
-export function flood(maze, pos, maxDistance = Infinity) {
-    let result = array2d(maze[0].length, maze.length, () => Infinity);
-    let stack = [{ ...pos, cost: 0 }];
-    while (stack.length > 0) {
-        let { q, r, cost } = stack.shift();
-        if (result[r][q] <= cost) continue;
-        result[r][q] = cost++;
-        if (result[r][q] >= maxDistance) continue;
-        if (maze[r][q + 1] && result[r][q + 1] > cost)
-            stack.push({ q: q + 1, r, cost });
-        if (maze[r][q - 1] && result[r][q - 1] > cost)
-            stack.push({ q: q - 1, r, cost });
-        if (maze[r + 1][q] && result[r + 1][q] > cost)
-            stack.push({ q, r: r + 1, cost });
-        if (maze[r - 1][q] && result[r - 1][q] > cost)
-            stack.push({ q, r: r - 1, cost });
-    }
-    return result;
-}
-
-export function array2d(width, height, fn) {
-    return Array.from({ length: height }, () =>
-        Array.from({ length: width }, fn)
-    );
-}
-
 export function tileIsPassable(q, r) {
-    if (game.brawl) {
-        let room = game.brawl.room;
+    if (Game.brawl) {
+        let room = Game.brawl.room;
         if (
             q < room.q ||
             r < room.r ||
@@ -109,8 +51,8 @@ export function tileIsPassable(q, r) {
         )
             return false;
     }
-    if (q < 0 || r < 0 || q >= game.maze.w || r >= game.maze.h) return false;
-    return !!game.maze.maze[r][q];
+    if (q < 0 || r < 0 || q >= Game.maze.w || r >= Game.maze.h) return false;
+    return !!Game.maze.maze[r][q];
 }
 
 export function rgba(r, g, b, a) {

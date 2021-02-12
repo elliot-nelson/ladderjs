@@ -1,6 +1,6 @@
-import { game } from './Game';
-
 /**
- * Create and launch game.
+ * This is the entry point for the game.
  */
-game.init();
+import { Game } from './Game';
+
+Game.init();

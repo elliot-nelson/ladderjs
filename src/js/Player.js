@@ -7,7 +7,7 @@ import { Text } from './Text';
 import { LEVEL_ROWS, LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
 import { Screen } from './Screen';
-import { game } from './Game';
+import { Game } from './Game';
 
 const DEATH_FRAMES = ['p', 'p', 'b', 'd', 'd', 'q', 'p', 'p', 'b', 'd', 'd', 'q', '-', '-', '_', '_', '_', '_', '_'];
 

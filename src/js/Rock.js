@@ -3,7 +3,7 @@ import { State } from './Behavior';
 import { LEVEL_COLS } from './Constants';
 import { Entity } from './Entity';
 import { Screen } from './Screen';
-import { game } from './Game';
+import { Game } from './Game';
 
 const DEATH_FRAMES = ['{', '}', '(', ')', '%', '%', ':', ':'];
 
