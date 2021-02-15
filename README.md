@@ -20,8 +20,15 @@ Not only did I think it would be fun to play Ladder again, I thought it would be
 
 I'm not the first person to have this idea -- Stephen Ostermiller has been maintaining his [Java port](https://ostermiller.org/ladder/) for many years, and there's also an excellent [Turbo Pascal port](https://github.com/mecparts/Ladder), both of which I referenced heavily while creating my version.
 
-One difference between the previous ports and `ladderjs` is that I wanted ladderjs to be _written the way you would write a JavaScript game today_. The way I handle the HTML5 canvas, keyboard events, and the basic update/draw game loop is essentially the same way I do it in my annual js13k games, and the rest of the logic I've attempted to simplify and document as much as possible, so that an aspiring game developer can use it as a basis for their own games.
+One difference between the previous ports and `ladderjs` is that I wanted ladderjs to be _written the way you would write a JavaScript game today_. The way I handle the HTML5 canvas, keyboard events, and the basic update/draw game loop is essentially the same way I do in my annual js13k games, and the rest of the logic I've attempted to simplify and document as much as possible, so that an aspiring game developer can use it as a basis for their own games.
 
 ## Play it now
 
 You can play ladderjs in your browser at [ladderjs.7tonshark.com](https://ladderjs.7tonshark.com).
+
+## Changelog
+
+| Version | Summary |
+| --- | --- |
+| v0.2.0 | Made available publicly at [ladderjs.7tonshark.com](https://ladderjs.7tonshark.com). |
+| v0.1.0 | Initial, mostly-working game with all 7 original levels. |
