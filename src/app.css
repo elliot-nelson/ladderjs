@@ -6,10 +6,10 @@ html, body {
 
 div {
     position: absolute;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
+    top: 8px;
+    bottom: 8px;
+    left: 4px;
+    right: 4px;
 }
 
 #canvas {

@@ -14,7 +14,7 @@ import { MainMenu } from './MainMenu';
 import { InstructionsMenu } from './InstructionsMenu';
 import { GameSession } from './GameSession';
 
-export class Game {
+export const Game = {
     init() {
         Sprite.loadSpritesheet(async () => {
             await Viewport.init();
@@ -29,7 +29,7 @@ export class Game {
 
             this.start();
         });
-    }
+    },
 
     start() {
         this.frame = 0;
@@ -37,7 +37,7 @@ export class Game {
         this.menu = new MainMenu();
 
         window.requestAnimationFrame(() => this.onFrame());
-    }
+    },
 
     onFrame() {
         let fps = 60;
@@ -59,7 +59,7 @@ export class Game {
         this.draw();
 
         window.requestAnimationFrame(() => this.onFrame());
-    }
+    },
 
     update() {
         // Pull in frame by frame button pushes / keypresses / mouse clicks
@@ -73,7 +73,7 @@ export class Game {
         }
 
         if (this.session) this.session.update();
-    }
+    },
 
     draw() {
         // Reset canvas transform and scale
@@ -94,32 +94,32 @@ export class Game {
 
         // Render the text on the screen to the viewport.
         Screen.drawToViewport();
-    }
+    },
 
     pause() {
         if (this.paused) return;
         this.paused = true;
         Audio.pause();
-    }
+    },
 
     unpause() {
         if (!this.paused) return;
         this.paused = false;
         Audio.unpause();
-    }
+    },
 
     startSession() {
         this.menu = undefined;
         this.session = new GameSession();
-    }
+    },
 
     showMainMenu() {
         this.menu = new MainMenu();
         this.session = undefined;
-    }
+    },
 
     showInstructions() {
         this.menu = new InstructionsMenu();
         this.session = undefined;
     }
-}
+};
