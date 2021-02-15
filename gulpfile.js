@@ -75,7 +75,7 @@ function minifyBuild() {
             mangle: false
         }))
         .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('site/play'));
+        .pipe(gulp.dest('dist'));
 }
 
 const buildJs = gulp.series(compileBuild, minifyBuild);
@@ -86,7 +86,7 @@ const buildJs = gulp.series(compileBuild, minifyBuild);
 function buildCss() {
     return gulp.src('src/app.css')
         .pipe(cleancss())
-        .pipe(gulp.dest('site/play'));
+        .pipe(gulp.dest('dist'));
 }
 
 // -----------------------------------------------------------------------------
@@ -126,7 +126,7 @@ async function generateSpriteSheetData() {
 function copyAssets() {
     return gulp.src('src/assets/spritesheet-gen.png')
         .pipe(rename('sprites.png'))
-        .pipe(gulp.dest('site/play'));
+        .pipe(gulp.dest('dist'));
 }
 
 const buildAssets = gulp.series(
@@ -141,7 +141,7 @@ const buildAssets = gulp.series(
 function buildHtml() {
     return gulp.src('src/index.html')
         .pipe(htmlmin({ collapseWhitespace: true }))
-        .pipe(gulp.dest('site/play'));
+        .pipe(gulp.dest('dist'));
 }
 
 // -----------------------------------------------------------------------------
