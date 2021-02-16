@@ -8,5 +8,6 @@ export const SpriteSheet =
 { font: [ [ 128, 0, 128, 448 ] ],
   font2: [ [ 0, 0, 128, 512 ] ],
   harold: [ [ 128, 448, 19, 12 ] ],
+  pixel: [ [ 147, 448, 6, 6 ] ],
   uri: 'sprites.png' }
 /* </generated> */

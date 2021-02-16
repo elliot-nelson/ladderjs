@@ -40,6 +40,18 @@ export class GameSession {
             this.nextFrame = now + this.moveFrameMillisecondDelay();
         }
 
+        if (this.paused && [Input.Action.PAUSE, Input.Action.RESUME].includes(Input.lastAction())) {
+            this.paused = false;
+            Input.consume();
+        }
+
+        if (!this.paused && Input.lastAction() === Input.Action.PAUSE) {
+            this.paused = true;
+            Input.consume();
+        }
+
+        if (this.paused) return;
+
         // If we haven't instantiated the playing field yet, create it now.
         if (!this.field) this.field = new PlayingField(this.levelNumber);
 
@@ -59,6 +71,10 @@ export class GameSession {
             this.field ? String(this.field.time).padStart(4, ' ') : ''
         ];
         Screen.write(0, 21, `Lads   ${stat[0]}     Level   ${stat[1]}      Score   ${stat[2]}      Bonus time   ${stat[3]}`);
+
+        if (this.paused) {
+            Screen.write(0, 23, 'Paused - type ESCape or RETURN to continue.');
+        }
     }
 
     restartLevel() {

@@ -7,7 +7,7 @@ export class InstructionsMenu {
     }
 
     update() {
-        if (Input.lastKeyPressed().toUpperCase() !== '') {
+        if (Input.lastKey().toUpperCase() !== '') {
             Input.consume();
             Game.showMainMenu();
         }

@@ -80,7 +80,7 @@ export const Game = {
         Viewport.ctx.setTransform(Viewport.scale, 0, 0, Viewport.scale, 0, 0);
 
         // Clear canvas
-        Viewport.ctx.fillStyle = 'black';
+        Viewport.ctx.fillStyle = '#141414';
         Viewport.ctx.fillRect(0, 0, Viewport.width, Viewport.height);
 
         // Center the 80x25 character "screen" in the viewport

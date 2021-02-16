@@ -25,6 +25,15 @@
     "spriteSourceSize": { "x": 0, "y": 0, "w": 19, "h": 12 },
     "sourceSize": { "w": 19, "h": 12 },
     "duration": 100
+   },
+   {
+    "filename": "pixel.aseprite",
+    "frame": { "x": 147, "y": 448, "w": 6, "h": 6 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 6, "h": 6 },
+    "sourceSize": { "w": 6, "h": 6 },
+    "duration": 100
    }
  ],
  "meta": {

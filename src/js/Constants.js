@@ -18,8 +18,8 @@ export const CHARSHEET_HEIGHT = 32 * CHAR_HEIGHT;
 
 // The playable area. Note that this is the desired dimensions, but the actual on-screen dimensions
 // may be larger to maintain aspect ratio (see `Viewport.width` & `Viewport.height`).
-export const GAME_WIDTH = SCREEN_WIDTH * CHAR_WIDTH;
-export const GAME_HEIGHT = SCREEN_HEIGHT * CHAR_HEIGHT;
+export const GAME_WIDTH = SCREEN_WIDTH * CHAR_WIDTH + CHAR_WIDTH;
+export const GAME_HEIGHT = SCREEN_HEIGHT * CHAR_HEIGHT + CHAR_HEIGHT;
 
 // Fixed level size
 export const LEVEL_ROWS = 20;

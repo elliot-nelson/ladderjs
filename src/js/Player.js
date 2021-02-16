@@ -36,7 +36,7 @@ export class Player extends Entity {
 
         if (!moveFrame) return;
 
-        let action = Input.lastActionPressed();
+        let action = Input.lastAction();
 
         if (action === Input.Action.LEFT) {
             this.nextState = State.LEFT;

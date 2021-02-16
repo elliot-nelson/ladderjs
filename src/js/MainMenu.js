@@ -8,7 +8,7 @@ export class MainMenu {
     }
 
     update() {
-        switch (Input.lastKeyPressed().toUpperCase()) {
+        switch (Input.lastKey().toUpperCase()) {
             case 'P':
                 Input.consume();
                 Game.startSession();

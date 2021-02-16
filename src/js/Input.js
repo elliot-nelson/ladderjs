@@ -61,15 +61,11 @@ export const Input = {
         this.history = this.history.filter(entry => entry.at > now - 3000);
     },
 
-    lastKeyPressed() {
+    lastKey() {
         return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].key : '';
     },
 
-    lastCodePressed() {
-        return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].code : '';
-    },
-
-    lastActionPressed() {
+    lastAction() {
         return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].action : undefined;
     },
 
