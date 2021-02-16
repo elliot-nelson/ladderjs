@@ -20,6 +20,7 @@ export class GameSession {
         this.levelCycle = 1;
         this.lives = 5;
         this.nextLife = 100;
+        this.paused = false;
     }
 
     update() {

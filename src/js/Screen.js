@@ -36,15 +36,14 @@ export const Screen = {
         }
     },
 
-    drawToViewport() {
+    draw(ctx) {
         let text = this.screen.map(row => row.join('')).join('\n');
 
         Text.drawText(
-            Viewport.ctx,
+            ctx,
             Text.splitParagraph(text, Viewport.width),
             0, 0,
-            1,
-            Text.terminal, Text.terminal_shadow
+            Text.glow
         );
     }
 };

@@ -1,10 +1,10 @@
 - Allow buffering of jump direction inputs
 - Write useful docs site
-- Work on "background color"
-- Work on "glow" of characters
 - Alternate "modes"?
 - Main Menu insults
 - end of level insults
 - high score handling
 - exit back to main menu when game over
 - clean up unused Util code
+- use lives when you die
+- gain lives correctly

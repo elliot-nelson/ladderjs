@@ -7,8 +7,10 @@ export const SPRITESHEET_URI = 'sprites.png';
 
 // The "screen area". This is an ASCII game and so most of the game logic doesn't care about browser
 // pixels, we care about the ASCII display area (80x25).
+//
+// Actually the original was likely an 80x24. We can use either here, whatever looks good in the browser.
 export const SCREEN_WIDTH = 80;
-export const SCREEN_HEIGHT = 25;
+export const SCREEN_HEIGHT = /*25*/ 24;
 
 // The size of our on-screen characters (given dimensions above, this is 80 cols by 25 rows).
 export const CHAR_WIDTH = 8;
@@ -16,10 +18,18 @@ export const CHAR_HEIGHT = 16;
 export const CHARSHEET_WIDTH = 16 * CHAR_WIDTH;
 export const CHARSHEET_HEIGHT = 32 * CHAR_HEIGHT;
 
+// A screen scale factor. This scale factor multiplies the entire screen size so that
+// we can then introduce text artifacts (like character glow and scan lines), to give it
+// a little of that 1982 feel.
+export const SCREEN_SCALE = 4;
+
 // The playable area. Note that this is the desired dimensions, but the actual on-screen dimensions
 // may be larger to maintain aspect ratio (see `Viewport.width` & `Viewport.height`).
-export const GAME_WIDTH = SCREEN_WIDTH * CHAR_WIDTH + CHAR_WIDTH;
-export const GAME_HEIGHT = SCREEN_HEIGHT * CHAR_HEIGHT + CHAR_HEIGHT;
+//
+// Note the extra little padding of a character, which just prevents our text from butting right
+// against the edge of the browser window.
+export const GAME_WIDTH = (SCREEN_WIDTH + 1) * CHAR_WIDTH * SCREEN_SCALE;
+export const GAME_HEIGHT = (SCREEN_HEIGHT + 1) * CHAR_HEIGHT * SCREEN_SCALE;
 
 // Fixed level size
 export const LEVEL_ROWS = 20;
