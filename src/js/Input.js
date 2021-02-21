@@ -1,3 +1,21 @@
+/**
+ * `Input` is a singleton that helps us map keyboard events in the browser
+ * to in-game actions.
+ *
+ * We generally care about two types of input events:
+ *
+ *  - An "action" is a specific action recognizable by the game, like moving right
+ *    or jumping. In theory, if this was a more complicated game, there could be
+ *    many ways to cause a specific action (maybe user presses SPACEBAR to jump,
+ *    or they click RIGHT MOUSE BUTTON, or they tap A on a gamepad, etc.). For this
+ *    reason, it helps to separate processing in-game actions from processing the
+ *    raw keyboard events that cause them.
+ *
+ *  - Actual key presses. There are situations where we need a more broad view of
+ *    the user's key presses, for example, if they are typing in their name for a
+ *    high score or pressing one of the inputs at the main menu. In this case we
+ *    want to know "did the user tap P?", as opposed to mapping the keys to actions.
+ */
 
 // A list of in-game actions that can be performed by the player
 const Action = {
@@ -65,10 +83,12 @@ export const Input = {
     },
 
     lastKey() {
+        // A shortcut helper for code that cares about what KEY was pressed.
         return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].key : '';
     },
 
     lastAction() {
+        // A shortcut helper for code that cares about what ACTION was taken.
         return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].action : undefined;
     },
 
@@ -80,5 +100,5 @@ export const Input = {
         // though, we want to clear the history too, otherwise we'll just keep behaving
         // like the user is entering the cheat code every frame.
         if (clearHistory) this.history = [];
-    },
+    }
 }

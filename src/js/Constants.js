@@ -1,5 +1,11 @@
 /**
- * Constants
+ * Global constants for our game.
+ *
+ * I export all constants individually and import just the ones I want in each file that
+ * uses them. In theory this helps with tree-shaking and lets you see at a glance which
+ * files use which constants, but mostly it works only because this is a small game. If you
+ * have hundreds of constants it's probably better to export a single `Constants` object and
+ * let them be namespaced.
  */
 
 // Spritesheet URI (produced during gulp build)
