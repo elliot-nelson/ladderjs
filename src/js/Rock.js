@@ -1,9 +1,12 @@
-import { Text } from './Text';
-import { State } from './Behavior';
+/**
+ * `Rock` is a class representing the Der rocks, which fall through the level
+ * and kill the player if touched.
+ */
+
 import { LEVEL_COLS } from './Constants';
+import { State } from './Behavior';
 import { Entity } from './Entity';
 import { Screen } from './Screen';
-import { Game } from './Game';
 
 const DEATH_FRAMES = ['{', '}', '(', ')', '%', '%', ':', ':'];
 
