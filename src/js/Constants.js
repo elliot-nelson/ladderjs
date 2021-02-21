@@ -66,3 +66,6 @@ export const HIDDEN_FACTOR_MAX_ROCKS = 2;
 export const SCORE_ROCK = 1;
 export const SCORE_STATUE = 2;
 export const SCORE_TREASURE = 3;
+
+// 1-Up
+export const NEW_LIFE_SCORE = 10_000;

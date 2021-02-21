@@ -89,4 +89,15 @@ export class Player extends Entity {
 
         Screen.write(this.x, this.y, char);
     }
+
+    kill() {
+        // Just a convenience method for killing the player.
+        //
+        // Note that "killing" the player just puts it in a dying state, we'll play
+        // a little death animation as rocks move about before the player actually dies,
+        // at which point they will lose a life and the level starts over.
+        if (this.state != State.DYING && this.state != State.DEAD) {
+            this.state = State.DYING;
+        }
+    }
 }

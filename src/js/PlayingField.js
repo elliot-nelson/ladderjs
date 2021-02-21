@@ -118,9 +118,15 @@ export class PlayingField {
                 this.rocks.push(new Rock(dispenser));
             }
 
-            // Kill player
+            // Dying player
             if (this.player.state === State.DEAD) {
-                Game.session.restartLevel();
+                Game.session.lives--;
+                if (Game.session.lives <= 0) {
+                    // TODO: More fanfare
+                    Game.showMainMenu();
+                } else {
+                    Game.session.restartLevel();
+                }
             }
         }
     }
@@ -228,7 +234,7 @@ export class PlayingField {
         for (let i = 0; i < this.rocks.length; i++) {
             if (this.player.x === this.rocks[i].x) {
                 if (this.player.y === this.rocks[i].y) {
-                    this.player.state = State.DYING;
+                    this.player.kill();
                     this.rocks.splice(i, 1);
                     break;
                 } else if (this.player.y === this.rocks[i].y - 1 && this.emptySpace(this.player.x, this.player.y + 1)) {

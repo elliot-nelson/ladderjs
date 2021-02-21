@@ -41,6 +41,9 @@ export const Input = {
         // Input history - history contains recent key press events in order,
         // removed automatically after a few seconds. This is useful for detecting
         // inputs like cheat codes, for example.
+        //
+        // (Actually, cheat codes is the only use for this extra history buffer, so
+        // if you didn't support cheat codes you could delete it altogether.)
         this.history = [];
 
         window.addEventListener('keydown', event => {
@@ -69,7 +72,13 @@ export const Input = {
         return this.buffer.length > 0 ? this.buffer[this.buffer.length - 1].action : undefined;
     },
 
-    consume() {
+    consume(clearHistory) {
         this.buffer = [];
+
+        // Normally, "consuming" all existing buffer input is something that happens
+        // somewhere in the game logic. If we just detected and acted on a cheat code,
+        // though, we want to clear the history too, otherwise we'll just keep behaving
+        // like the user is entering the cheat code every frame.
+        if (clearHistory) this.history = [];
     },
 }

@@ -6,7 +6,7 @@
  * the level number, etc.). Most of the actual in-game logic it hands off to `PlayingField`.
  */
 
-import { PLAY_SPEEDS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE, HIDDEN_FACTOR_PLAY_SPEED } from './Constants';
+import { PLAY_SPEEDS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE, HIDDEN_FACTOR_PLAY_SPEED, NEW_LIFE_SCORE } from './Constants';
 import { Game } from './Game';
 import { PlayingField } from './PlayingField';
 import { Level } from './Level';
@@ -19,7 +19,7 @@ export class GameSession {
         this.levelNumber = 0;
         this.levelCycle = 1;
         this.lives = 5;
-        this.nextLife = 100;
+        this.nextLife = NEW_LIFE_SCORE;
         this.paused = false;
     }
 
@@ -103,6 +103,11 @@ export class GameSession {
                 this.score += 10;
                 break;
         }
+
+        if (this.score >= this.nextLife) {
+            this.lives++;
+            this.nextLife += NEW_LIFE_SCORE;
+        }
     }
 
     hiddenFactor() {
@@ -120,7 +125,7 @@ export class GameSession {
     handleCheatCodes() {
         // Cheat codes are useful for testing, and this game is no exception. Of course
         // THESE cheat codes do not belong here, as they wouldn't be created until 11 years
-        // later, but that won't stop me from inserting them anywhere I get the chance!
+        // later, but that won't stop me from using them anywhere I get the chance!
         //
         // =================     ===============     ===============   ========  ========
         // \\ . . . . . . .\\   //. . . . . . .\\   //. . . . . . .\\  \\. . .\\// . . //
@@ -146,16 +151,19 @@ export class GameSession {
         if (recentKeystrokes.match(/IDCLEV(\d\d)/)) {
             // Changing levels is as simple as setting the desired level number
             // and then throwing the current playing field away.
-            Input.consume();
+            Input.consume(true);
             this.levelNumber = parseInt(RegExp.$1, 10);
             this.field = undefined;
-        } else if (recentKeystrokes.includes("IDDQD")) {
-            Input.consume();
-            console.log("god mode");
-        } else if (recentKeystrokes.includes("IDKFA")) {
-            // Immediately end the current level as if we'd touched the reasure.
-            Input.consume();
-            this.field.winning = true;
+        } else if (recentKeystrokes.includes('IDDQD')) {
+            Input.consume(true);
+            console.log('god mode');
+        } else if (recentKeystrokes.includes('IDKFA')) {
+            // Immediately end the current level as if we'd touched the treasure.
+            Input.consume(true);
+            if (this.field) this.field.winning = true;
+        } else if (recentKeystrokes.includes('IDKILL')) {
+            Input.consume(true);
+            if (this.field && this.field.player) this.field.player.kill();
         }
     }
 }
