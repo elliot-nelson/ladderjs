@@ -34,7 +34,7 @@ export const Game = {
     start() {
         this.frame = 0;
         this.playSpeed = 0;
-        this.menu = new MainMenu();
+        this.showMainMenu();
 
         window.requestAnimationFrame(() => this.onFrame());
     },
