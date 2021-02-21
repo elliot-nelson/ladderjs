@@ -25,9 +25,7 @@ export const Sprite = {
 
     init() {
         // Base pixel font and icons (see `Text.init` for additional variations)
-        Sprite.font = initBasicSprite(SpriteSheet.font2[0]);
-
-        return;
+        Sprite.font = initBasicSprite(SpriteSheet.font[0]);
     },
 
     /**
@@ -79,12 +77,7 @@ function initDynamicSprite(source, anchor) {
 
     return {
         img: source,
-        // Hack! Using a flat `.map(initBasicSprite)` is actually going to pass the
-        // element INDEX as second argument, resulting in "anchor=1". The right solution
-        // here is "typeof anchor === 'object' ?", but to save bytes I avoid using
-        // the typeof and instanceof keywords anywhere in the codebase. Hence,
-        // "anchor && anchor.x".
-        anchor: (anchor && anchor.x) ? anchor : { x: (w / 2) | 0, y: (h / 2) | 0 }
+        anchor: anchor || { x: (w / 2) | 0, y: (h / 2) | 0 }
     };
 }
 

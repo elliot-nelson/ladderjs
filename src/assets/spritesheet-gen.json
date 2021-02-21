@@ -1,38 +1,11 @@
 { "frames": [
    {
     "filename": "font.aseprite",
-    "frame": { "x": 128, "y": 0, "w": 128, "h": 448 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 448 },
-    "sourceSize": { "w": 128, "h": 448 },
-    "duration": 100
-   },
-   {
-    "filename": "font2.aseprite",
     "frame": { "x": 0, "y": 0, "w": 128, "h": 512 },
     "rotated": false,
     "trimmed": false,
     "spriteSourceSize": { "x": 0, "y": 0, "w": 128, "h": 512 },
     "sourceSize": { "w": 128, "h": 512 },
-    "duration": 100
-   },
-   {
-    "filename": "harold.aseprite",
-    "frame": { "x": 128, "y": 448, "w": 19, "h": 12 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 19, "h": 12 },
-    "sourceSize": { "w": 19, "h": 12 },
-    "duration": 100
-   },
-   {
-    "filename": "pixel.aseprite",
-    "frame": { "x": 147, "y": 448, "w": 6, "h": 6 },
-    "rotated": false,
-    "trimmed": false,
-    "spriteSourceSize": { "x": 0, "y": 0, "w": 6, "h": 6 },
-    "sourceSize": { "w": 6, "h": 6 },
     "duration": 100
    }
  ],
@@ -41,7 +14,7 @@
   "version": "1.2.18",
   "image": "spritesheet-gen.png",
   "format": "RGBA8888",
-  "size": { "w": 256, "h": 512 },
+  "size": { "w": 128, "h": 512 },
   "scale": "1"
  }
 }
