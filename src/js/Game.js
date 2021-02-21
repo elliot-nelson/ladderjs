@@ -106,20 +106,26 @@ export const Game = {
         // (Technically scan lines should be IN BETWEEN rows of pixels, and what we're actually simulating
         // here is our eyeballs clocking the screen refresh. We're going for a general feeling here.)
         Viewport.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        for (let i = -Viewport.height / 2; i < Viewport.height / 2; i++) {
-            let k = ((this.frame / 4) % 4) + i * 4;
-            Viewport.ctx.fillRect(-Viewport.width, k, Viewport.width * 2, 2);
+        for (let y = Math.floor(-Viewport.height / 2) - 4; y < Viewport.height + 4; y += 4) {
+            let r = ((this.frame / 5) % 4) + y;
+            Viewport.ctx.fillRect(-Viewport.width, r, Viewport.width * 2, 2);
         }
     },
 
     startSession() {
         this.menu = undefined;
         this.session = new GameSession();
+
+        // Hide the github link while in a game session
+        document.getElementsByClassName('github-corner')[0].className = 'github-corner hidden';
     },
 
     showMainMenu() {
         this.menu = new MainMenu();
         this.session = undefined;
+
+        // Show github link again when returning from a game
+        document.getElementsByClassName('github-corner')[0].className = 'github-corner';
     },
 
     showInstructions() {
@@ -128,7 +134,8 @@ export const Game = {
     },
 
     lostFocus() {
-        // If we lose focus, automatically pause the game session (if there is one).
+        // If we lose focus (the user switched tabs, or tabbed away from the browser),
+        // automatically pause the game session if there is one.
         if (this.session) this.session.paused = true;
     },
 
