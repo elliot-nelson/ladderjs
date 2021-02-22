@@ -1,8 +1,6 @@
 [
     {
         "name": "Easy Street",
-        "time": 35,
-        "maxRocks": 5,
         "layout": [
             "                                       V                 $                     ",
             "                                                         H                     ",
@@ -28,8 +26,6 @@
     },
     {
         "name": "Long Island",
-        "time": 45,
-        "maxRocks": 8,
         "layout": [
             "                                                                          $    ",
             "                                                                   &      H    ",
@@ -55,8 +51,6 @@
     },
     {
         "name": "Ghost Town",
-        "time": 35,
-        "maxRocks": 5,
         "layout": [
             "                            V               V           V               $      ",
             "                                                                       $$$     ",
@@ -82,8 +76,6 @@
     },
     {
         "name": "Tunnel Vision",
-        "time": 36,
-        "rocks": 5,
         "layout": [
             "                                            V                       V          ",
             "                                                                               ",
@@ -136,8 +128,6 @@
     },
     {
         "name": "Bug City",
-        "time": 37,
-        "maxRocks": 6,
         "layout": [
             "        Bug City             HHHHHHHH                          V               ",
             "                           HHH      HHH                                        ",
@@ -163,8 +153,6 @@
     },
     {
         "name": "GangLand",
-        "time": 32,
-        "maxRocks": 6,
         "layout": [
             "                    =Gang Land=                             V                  ",
             "                   ==      _  ==                                      .        ",

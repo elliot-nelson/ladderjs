@@ -1,3 +1,15 @@
+/**
+ * `Level` is a singleton that handles logic related to loading levels. A "level"
+ * is a bundle of data (like layout, dispensers, player position, etc.). When you
+ * load a level, that data is used to initialize a new "playing field" -- this is
+ * what the player moves around on and interacts with.
+ *
+ * (Naming things is hard, so it helps to make a decision and then stick to it
+ * throughout your codebase. In this case, the decision is that a "level" is a
+ * static block of data about a level the user COULD play, whereas a level being
+ * actively played is called a playing field.)
+ */
+
 import { LEVEL_ROWS, LEVEL_COLS } from './Constants';
 import LevelData from '../levels/levels.json';
 
@@ -6,8 +18,9 @@ export const Level = {
     LEVEL_COUNT: LevelData.length,
 
     load(levelNumber) {
-        console.log(Level.LEVELS);
-        // As the player keeps playing, level numbers will loop around to beginning
+        // In the original Ladder, "level 7" was the last level, and continuing to
+        // play looped you around to the beginning again (level 8 is Easy Street
+        // again and so on, and so is level 15, etc.).
         let level = Level.LEVELS[levelNumber % Level.LEVELS.length];
         if (!level) throw new Error(`No such level number: ${levelNumber}`);
 
@@ -55,8 +68,6 @@ export const Level = {
 
         return {
             name: level.name,
-            time: level.time,
-            maxRocks: level.maRrocks,
             layout,
             dispensers,
             player
