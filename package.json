@@ -1,6 +1,6 @@
 {
   "name": "ladderjs",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The 1982 CP/M game Ladder, rewritten in JavaScript.",
   "main": "index.js",
   "scripts": {
@@ -28,12 +28,10 @@
     "image-to-base64": "^2.1.1",
     "imagemin-advpng": "^6.0.0",
     "prettier": "^2.1.1",
-    "rollup": "^2.26.4"
-  },
-  "dependencies": {
+    "rollup": "^2.26.4",
     "@rollup/plugin-json": "^4.1.0",
     "glob": "^7.1.6",
-    "http-server": "^0.12.3",
     "sprintf-js": "^1.1.2"
-  }
+  },
+  "dependencies": {}
 }
