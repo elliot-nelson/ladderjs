@@ -1,12 +1,16 @@
+/**
+ * `MainMenu` is a class that represents a screen the user can view. Instances of
+ * MainMenu are constructed whenever we want the user to go to the main menu, and
+ * thrown away when we're done.
+ */
+
+import { PLAY_SPEEDS } from './Constants';
+import { GameVersion } from './GameVersion-gen.json';
 import { Screen } from './Screen';
 import { Game } from './Game';
-import { PLAY_SPEEDS } from './Constants';
 import { Input } from './Input';
 
 export class MainMenu {
-    constructor() {
-    }
-
     update() {
         switch (Input.lastKey().toUpperCase()) {
             case 'P':
@@ -29,8 +33,7 @@ export class MainMenu {
     }
 
     draw() {
-        let version = '?';
-        let terminal = '?';
+        let terminal = 'Quiche MkII';
 
         let highScores = [
             `1) 6000  Bob`,
@@ -50,7 +53,7 @@ export class MainMenu {
             `               LL        aa  aa   dd  dd   dd  dd   ee      rr`,
             `               LLLLLLLL   aaa aa   ddd dd   ddd dd   eeee   rr`,
             ``,
-            `                                       Version:    ${version}`,
+            `                                       Version:    ${GameVersion}`,
             `(c) 1982, 1983 Yahoo Software          Terminal:   ${terminal}`,
             `10970 Ashton Ave.  Suite 312           Play speed: ${Game.playSpeed + 1} / ${PLAY_SPEEDS.length}`,
             `Los Angeles, Ca  90024                 Move = ↑↓←→/WASD, Jump = Space,`,

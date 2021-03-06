@@ -12,8 +12,6 @@ const rollupJson        = require('@rollup/plugin-json');
 
 const AsepriteCli       = require('./tools/aseprite-cli');
 const ImageDataParser   = require('./tools/image-data-parser');
-const MapDataParser     = require('./tools/map-data-parser');
-const LevelDataParser   = require('./tools/level-data-parser');
 
 // -----------------------------------------------------------------------------
 // Gulp Plugins
@@ -35,6 +33,14 @@ const terser            = require('gulp-terser');
 // -----------------------------------------------------------------------------
 // JS Build
 // -----------------------------------------------------------------------------
+async function generateGameVersion() {
+    let file = 'src/js/GameVersion-gen.json';
+    let data = {
+        GameVersion: require('./package.json').version
+    };
+    fs.writeFileSync(file, JSON.stringify(data, undefined, 4), 'utf8');
+}
+
 async function compileBuild() {
     try {
         const bundle = await rollup.rollup({
@@ -78,7 +84,7 @@ function minifyBuild() {
         .pipe(gulp.dest('dist'));
 }
 
-const buildJs = gulp.series(compileBuild, minifyBuild);
+const buildJs = gulp.series(generateGameVersion, compileBuild, minifyBuild);
 
 // -----------------------------------------------------------------------------
 // CSS Build
