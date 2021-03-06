@@ -10,7 +10,7 @@ import { LEVEL_COLS, SCORE_ROCK, SCORE_STATUE, SCORE_TREASURE, MAX_ROCKS, DISPEN
 import { Game } from './Game';
 import { Player } from './Player';
 import { Rock } from './Rock';
-import { State } from './Behavior';
+import { State } from './Entity';
 import { Screen } from './Screen';
 import { Level } from './Level';
 

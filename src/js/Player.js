@@ -1,22 +1,16 @@
 'use strict';
 
-import { Sprite } from './Sprite';
-import { State, JUMP_FRAMES } from './Behavior';
+import { State, applyEntityMovement } from './Entity';
 import { Input } from './Input';
-import { Text } from './Text';
-import { LEVEL_ROWS, LEVEL_COLS } from './Constants';
-import { Entity } from './Entity';
 import { Screen } from './Screen';
-import { Game } from './Game';
 
 const DEATH_FRAMES = ['p', 'p', 'b', 'd', 'd', 'q', 'p', 'p', 'b', 'd', 'd', 'q', '-', '-', '_', '_', '_', '_', '_'];
 
 /**
  * Player
  */
-export class Player extends Entity {
+export class Player {
     constructor(x, y) {
-        super();
         this.x = x;
         this.y = y;
         this.state = State.STOPPED;
@@ -24,7 +18,6 @@ export class Player extends Entity {
         this.queued = [];
         this.jumpStep = 0;
         this.deathStep = 0;
-        console.log('player constructed', x, y);
     }
 
     update(field, moveFrame) {
@@ -56,7 +49,7 @@ export class Player extends Entity {
             Input.consume();
         }
 
-        return this.applyMovement(field);
+        return applyEntityMovement(this, field);
     }
 
     draw() {

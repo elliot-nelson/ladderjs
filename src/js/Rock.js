@@ -4,15 +4,13 @@
  */
 
 import { LEVEL_COLS } from './Constants';
-import { State } from './Behavior';
-import { Entity } from './Entity';
+import { State, applyEntityMovement } from './Entity';
 import { Screen } from './Screen';
 
 const DEATH_FRAMES = ['{', '}', '(', ')', '%', '%', ':', ':'];
 
-export class Rock extends Entity {
+export class Rock {
     constructor(dispenser) {
-        super();
         this.x = dispenser.x;
         this.y = dispenser.y;
         this.state = State.FALLING;
@@ -62,7 +60,7 @@ export class Rock extends Entity {
             return;
         }
 
-        this.applyMovement(field);
+        return applyEntityMovement(this, field);
     }
 
     draw() {
