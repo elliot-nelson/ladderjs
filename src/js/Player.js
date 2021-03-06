@@ -21,6 +21,7 @@ export class Player extends Entity {
         this.y = y;
         this.state = State.STOPPED;
         this.nextState = State.STOPPED;
+        this.queued = [];
         this.jumpStep = 0;
         this.deathStep = 0;
         console.log('player constructed', x, y);

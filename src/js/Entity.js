@@ -31,6 +31,26 @@ export class Entity {
                         this.nextState = undefined;
                     }
                     break;
+
+                case State.JUMP_LEFT:
+                case State.JUMP_RIGHT:
+                case State.JUMP_UP:
+                    if (this.nextState === State.RIGHT && this.state != State.JUMP_RIGHT) {
+                        this.state = State.JUMP_RIGHT;
+                        this.nextState = State.RIGHT;
+                    }
+                    if (this.nextState === State.LEFT && this.state != State.JUMP_LEFT) {
+                        this.state = State.JUMP_LEFT;
+                        this.nextState = State.LEFT;
+                    }
+                    if (this.nextState === State.DOWN) {
+                        this.state = State.FALLING;
+                        this.nextState = undefined;
+                    }
+                    if (this.nextState === State.UP) {
+                        // Special case: leave UP in the queue for later
+                    }
+                    break;
             }
         }
 
@@ -55,13 +75,10 @@ export class Entity {
                     this.nextState = State.RIGHT;
                 }
             } else {
-                if (this.state === State.JUMP_UP || this.state === State.FALLING) {
-                    this.nextState = State.STOPPED;
-                } else if (this.state === State.JUMP_RIGHT) {
-                    this.nextState = State.RIGHT;
-                } else if (this.state === State.JUMP_LEFT) {
-                    this.nextState = State.LEFT;
-                }
+                // Special case: leave START_JUMP in the queue for later
+                //
+                // This lets the user tap jump a few frames before hitting the ground to
+                // chain-jump, especially at higher speeds bouncing off 1-wide platforms.
             }
         } else if (this.nextState === State.UP && field.isLadder(this.x, this.y)) {
             // Special case: the user wants to go up!
@@ -130,7 +147,6 @@ export class Entity {
             case State.JUMP_LEFT:
             case State.JUMP_UP:
                 let step = JUMP_FRAMES[this.state][this.jumpStep];
-                console.log(['jump', this.state, this.jumpStep, step]);
                 if ((this.x + step.x >= 0) && (this.x + step.x < LEVEL_COLS)) {
                     let terrain = field.layout[this.y + step.y][this.x + step.x];
                     if (['=', '|', '-'].includes(terrain)) {
@@ -154,7 +170,12 @@ export class Entity {
                     } else if (terrain === 'H') {
                         this.x += step.x;
                         this.y += step.y;
-                        this.state = State.STOPPED;
+
+                        if (this.nextState === State.UP) {
+                            this.state = State.UP;
+                        } else {
+                            this.state = State.STOPPED;
+                        }
                         this.nextState = undefined;
                     } else {
                         this.x += step.x;
@@ -162,8 +183,17 @@ export class Entity {
                         this.jumpStep++;
 
                         if (this.jumpStep >= JUMP_FRAMES[this.state].length) {
-                            this.state = this.nextState;
-                            this.nextState = undefined;
+                            switch (this.state) {
+                                case State.JUMP_RIGHT:
+                                    this.state = State.RIGHT;
+                                    break;
+                                case State.JUMP_LEFT:
+                                    this.state = State.LEFT;
+                                    break;
+                                case State.JUMP_UP:
+                                    this.state = State.UP;
+                                    break;
+                            }
                         }
                     }
                 } else {
