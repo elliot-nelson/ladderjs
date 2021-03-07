@@ -13,7 +13,6 @@ import { Screen } from './Screen';
 import { MainMenu } from './MainMenu';
 import { InstructionsMenu } from './InstructionsMenu';
 import { GameSession } from './GameSession';
-import { GameVersion } from './GameVersion-gen.json';
 
 export const Game = {
     init() {

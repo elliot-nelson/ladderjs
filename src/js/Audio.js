@@ -13,17 +13,17 @@ export const Audio = {
         Audio.gain_.connect(Audio.ctx.destination);
         zzfx.destination_ = Audio.gain_;
 
-        Audio.shotgun = [,0.01,140,0.01,0.02,0.45,4,2.42,0.1,-0.1,,,,1.2,,0.3,0.04,0.8,0.02];
-        Audio.page = [,,1233,,.01,.2,1,1.43,,,539,.1,,,,,,.51,.03,.01];
-        Audio.shellReload = [,,68,0.01,,0.14,1,1.53,7.5,0.1,50,0.02,-0.01,-0.2,0.1,0.2,,0.47,0.01];
-        Audio.damage = [,,391,,.19,.01,2,.54,-4,20,,,,,,,.02,.9];
-        Audio.alarm = [,,970,.12,.25,.35,,.39,8.1,,10,.1,.2,,.1,,,.6,.09,.13];
-        // [,,961,.05,.06,1.17,1,4.67,.8,,,,,.8,-0.8,.1,.49,.62,.09];
-        Audio.victory = [,,454,.06,.86,.71,2,.63,-0.7,1.7,-83,.09,.27,.3,.2,,.18,.95,.02,.02];
-        Audio.song = zzfxM(...ObliqueMystique);
+        // Sounds
+        Audio.score = [.7,.08,1675,,.06,.16,1,1.82,,,837,.06];
+        Audio.jump = [,.1,75,.03,.08,.17,1,1.88,7.83,,,,,.4];
+        Audio.dying = [,,925,.04,.3,.6,1,.3,,6.27,-184,.09,.17];
+        Audio.countdown = [0.9,.5,270,,.1,,1,1.5,,,,,,,,.1,.01];
+        Audio.begin = [,,539,0,.04,.29,1,1.92,,,567,.02,.02,,,,.04];
 
-        // Save our background music in os13k, for fun!
-        //localStorage[`OS13kMusic,${TITLE} - Oblique Mystique`] = JSON.stringify(ObliqueMystique);
+        // Sound throttling
+        Audio.soundThrottle = new Map();
+        Audio.soundDelays = new Map();
+        Audio.soundDelays.set(Audio.score, 160);
     },
 
     update() {
@@ -38,7 +38,15 @@ export const Audio = {
 
     play(sound) {
         if (!Audio.readyToPlay) return;
-        zzfx(...sound);
+
+        let now = new Date().getTime();
+        let allowed = Audio.soundThrottle.get(sound) || 0;
+        let delay = Audio.soundDelays.get(sound) || 0;
+
+        if (now >= allowed) {
+            zzfx(...sound);
+            Audio.soundThrottle.set(sound, now + delay);
+        }
     },
 
     // It's important we do pausing and unpausing as specific events and not in general update(),

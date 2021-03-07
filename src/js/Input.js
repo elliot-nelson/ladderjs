@@ -17,6 +17,8 @@
  *    want to know "did the user tap P?", as opposed to mapping the keys to actions.
  */
 
+import { Audio } from './Audio';
+
 // A list of in-game actions that can be performed by the player
 const Action = {
     UP:     11,
@@ -74,6 +76,13 @@ export const Input = {
             Input.buffer.push(entry);
             Input.history.push(entry);
             console.log(entry);
+
+            // Hack to ensure we initialize audio after user interacts with the game. Sometimes
+            // the browser will just ignore attempts to play audio if the user has not interacted
+            // with the page yet, but some browsers/versions will actually error out (either
+            // stopping the game itself, or preventing later audio playing). So it's better to
+            // plan for it explicitly.
+            Audio.readyToPlay = true;
         });
     },
 

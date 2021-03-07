@@ -13,6 +13,7 @@ import { Rock } from './Rock';
 import { State } from './Entity';
 import { Screen } from './Screen';
 import { Level } from './Level';
+import { Audio } from './Audio';
 
 export class PlayingField {
     constructor(levelNumber) {
@@ -31,6 +32,8 @@ export class PlayingField {
 
         // Not winning yet (while "winning" the player stops moving and we add up the bonus score)
         this.winning = false;
+
+        Audio.play(Audio.begin);
     }
 
     update(moveFrame) {
@@ -202,12 +205,12 @@ export class PlayingField {
 
         // Landing on fire kills you
         if (this.isFire(this.player.x, this.player.y)) {
-            this.player.state = State.DYING;
+            this.player.kill();
         }
 
         // Running out of time kills you
         if (this.time <= 0) {
-            this.player.state = State.DYING;
+            this.player.kill();
         }
 
         // Running into a rock kills you, and makes the rock that killed you disappear.

@@ -12,6 +12,7 @@ import { PlayingField } from './PlayingField';
 import { Level } from './Level';
 import { Screen } from './Screen';
 import { Input } from './Input';
+import { Audio } from './Audio';
 
 export class GameSession {
     constructor() {
@@ -103,6 +104,7 @@ export class GameSession {
                 this.score += 10;
                 break;
         }
+        Audio.play(Audio.score);
 
         if (this.score >= this.nextLife) {
             this.lives++;

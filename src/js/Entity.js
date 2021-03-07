@@ -3,6 +3,7 @@
  */
 
 import { LEVEL_COLS } from './Constants';
+import { Audio } from './Audio';
 
 // A list of states usable by entities. Some states only apply to players (rocks can't jump).
 //
@@ -125,6 +126,7 @@ export function applyEntityMovement(entity, field) {
                 entity.jumpStep = 0;
                 entity.nextState = State.RIGHT;
             }
+            Audio.play(Audio.jump);
         } else {
             // Special case: leave START_JUMP in the queue for later.
             //

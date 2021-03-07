@@ -3,8 +3,9 @@
 import { State, applyEntityMovement } from './Entity';
 import { Input } from './Input';
 import { Screen } from './Screen';
+import { Audio } from './Audio';
 
-const DEATH_FRAMES = ['p', 'p', 'b', 'd', 'd', 'q', 'p', 'p', 'b', 'd', 'd', 'q', '-', '-', '_', '_', '_', '_', '_'];
+const DEATH_FRAMES = ['p', 'p', 'b', 'b', 'd', 'd', 'q', 'q', 'p', 'p', 'b', 'b', 'd', 'd', 'q', 'q', '-', '-', '_', '_', '_', '_', '_'];
 
 /**
  * Player
@@ -92,6 +93,7 @@ export class Player {
         // at which point they will lose a life and the level starts over.
         if (this.state != State.DYING && this.state != State.DEAD) {
             this.state = State.DYING;
+            Audio.play(Audio.dying);
         }
     }
 }
