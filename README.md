@@ -30,6 +30,7 @@ You can play ladderjs in your browser at [ladderjs.7tonshark.com](https://ladder
 
 | Version | Summary |
 | --- | --- |
+| v0.4.0 | Simple sound effects using the zzfx library. |
 | v0.3.0 | Better air control (stop / change directions mid air), like original game. |
 | v0.2.0 | Made available publicly at [ladderjs.7tonshark.com](https://ladderjs.7tonshark.com). |
 | v0.1.0 | Initial, mostly-working game with all 7 original levels. |
