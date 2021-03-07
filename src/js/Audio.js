@@ -1,8 +1,19 @@
-'use strict';
+/**
+ * `Audio` is a singleton that controls sound effects within the game.
+ *
+ * The original game was only capable of the built-in "BEEP" sound in
+ * the terminal, and used it for score bumps (playing it repeatedly
+ * if you win a level, similar to the way we do in this version).
+ *
+ * We have a little more flexibility here and we're using very simple
+ * sounds built using zzfx. For examples like these check out the zzfx
+ * project, especially the soundboard at:
+ *
+ *     https://codepen.io/KilledByAPixel/details/BaowKzv
+ */
 
 import { zzfx, zzfxP, zzfxX } from './lib/zzfx';
 import { zzfxM } from './lib/zzfxm';
-import { ObliqueMystique } from './songs/ObliqueMystique';
 
 export const Audio = {
     init() {
@@ -14,13 +25,14 @@ export const Audio = {
         zzfx.destination_ = Audio.gain_;
 
         // Sounds
-        Audio.score = [.7,.08,1675,,.06,.16,1,1.82,,,837,.06];
-        Audio.jump = [,.1,75,.03,.08,.17,1,1.88,7.83,,,,,.4];
-        Audio.dying = [,,925,.04,.3,.6,1,.3,,6.27,-184,.09,.17];
-        Audio.countdown = [0.9,.5,270,,.1,,1,1.5,,,,,,,,.1,.01];
         Audio.begin = [,,539,0,.04,.29,1,1.92,,,567,.02,.02,,,,.04];
+        Audio.jump = [,.1,75,.03,.08,.17,1,1.88,7.83,,,,,.4];
+        Audio.score = [.7,.08,1675,,.06,.16,1,1.82,,,837,.06];
+        Audio.dying = [,,925,.04,.3,.6,1,.3,,6.27,-184,.09,.17];
 
-        // Sound throttling
+        // Sound throttling - for sounds that might play too often, we
+        // can setup a throttle so X milliseconds must pass before playing
+        // that particular sound again.
         Audio.soundThrottle = new Map();
         Audio.soundDelays = new Map();
         Audio.soundDelays.set(Audio.score, 160);
