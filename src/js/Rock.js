@@ -7,14 +7,16 @@ import { LEVEL_COLS } from './Constants';
 import { State, applyEntityMovement } from './Entity';
 import { Screen } from './Screen';
 
-const DEATH_FRAMES = ['{', '}', '(', ')', '%', '%', ':', ':'];
+const SPAWN_FRAMES = ['v', 'v', 'v', 'v', 'v', 'v', '.', '.', '.'];
+const DEATH_FRAMES = ['.', ':', '.'];
 
 export class Rock {
     constructor(dispenser) {
         this.x = dispenser.x;
         this.y = dispenser.y;
-        this.state = State.FALLING;
+        this.state = State.SPAWNING;
         this.nextState = undefined;
+        this.spawnStep = 0;
         this.deathStep = 0;
     }
 
@@ -24,7 +26,12 @@ export class Rock {
             if (this.deathStep >= DEATH_FRAMES.length) this.state = State.DEAD;
         }
 
-        if (this.state === State.DYING || this.state === State.DEAD) return;
+        if (this.state === State.SPAWNING) {
+            this.spawnStep++;
+            if (this.spawnStep >= SPAWN_FRAMES.length) this.state = State.FALLING;
+        }
+
+        if (this.state === State.SPAWNING || this.state === State.DYING || this.state === State.DEAD) return;
 
         if (!moveFrame) return;
 
@@ -67,6 +74,9 @@ export class Rock {
         let char = 'o';
 
         switch (this.state) {
+            case State.SPAWNING:
+                char = SPAWN_FRAMES[this.spawnStep];
+                break;
             case State.DYING:
                 char = DEATH_FRAMES[this.deathStep];
                 break;

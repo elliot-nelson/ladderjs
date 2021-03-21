@@ -22,7 +22,8 @@ export const State = {
     JUMP_RIGHT: 9,         // Jumping right (player only)
     JUMP_UP:    10,        // Jumping straight up (player only)
     DYING:      11,        // Dying (used as a death animation)
-    DEAD:       12         // Dead (for player, restart level; for rock, disappear)
+    DEAD:       12,        // Dead (for player, restart level; for rock, disappear)
+    SPAWNING:   13         // Entity is spawning (invincible / not controllable)
 };
 
 // This constant controls the "shape" of the left, right, and straight-up jumps by
