@@ -4,7 +4,6 @@
   "description": "The 1982 CP/M game Ladder, rewritten in JavaScript.",
   "main": "index.js",
   "scripts": {
-    "format": "prettier --write src/js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Elliot Nelson",
@@ -27,7 +26,6 @@
     "gulp-zip": "^4.2.0",
     "image-to-base64": "^2.1.1",
     "imagemin-advpng": "^6.0.0",
-    "prettier": "^2.1.1",
     "rollup": "^2.26.4",
     "@rollup/plugin-json": "^4.1.0",
     "glob": "^7.1.6",
